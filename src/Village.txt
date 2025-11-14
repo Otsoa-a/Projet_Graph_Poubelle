@@ -1,0 +1,35 @@
+# --- Sommets (carrefours) ---
+Sommets: 10
+1 2 3 4 5 6 7 8 9 10
+
+# --- Arêtes (Rues) ---
+# Format : u v distance_m
+Aretes:
+1 2 120
+2 3 80
+3 4 150
+2 5 200
+5 6 140
+6 7 90
+3 8 110
+8 9 130
+9 10 160
+4 10 180
+
+# --- Habitations ---
+# Chaque habitation est placée "sur une arête".
+# Format : HabitationID: u v position_m
+# position_m = distance depuis u (numérotation américaine)
+
+Habitations:
+H1: 1 2 40
+H2: 2 3 70
+H3: 3 8 45
+H4: 5 6 100
+H5: 9 10 40
+
+# --- Bâtiments publics (exemple) ---
+# Même format que habitations
+Batiments:
+Mairie: 3 4 60
+Ecole: 2 5 50
