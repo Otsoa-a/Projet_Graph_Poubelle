@@ -13,7 +13,7 @@ public class Main {
         }
 
         System.out.println("=== Test Dijkstra ===");
-        var chemin = Dijkstra.shortestPath(g, "I1", "I26");
+        var chemin = Dijkstra.shortestPath(g, "I1", "I30");
 
         System.out.println("Chemin obtenu :");
         for (var inter : chemin) {
