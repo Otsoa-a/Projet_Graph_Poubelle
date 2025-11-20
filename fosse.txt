@@ -1,0 +1,51 @@
+# === LISTE DES INTERSECTIONS ===
+INTERSECTION I1 0 50
+INTERSECTION I2 0 50
+INTERSECTION I3 0 50
+INTERSECTION I4 0 50
+INTERSECTION I5 0 50
+INTERSECTION I6 0 50
+INTERSECTION I7 0 50
+INTERSECTION I8 0 50
+INTERSECTION I9 0 50
+INTERSECTION I10 0 50
+INTERSECTION I11 0 50
+INTERSECTION I12 0 50
+
+# === 28 RUES (chaque rue composée de 1 à plusieurs sections) ===
+
+# ---- Rue 1 ----
+SECTION S1 RuedeCense I1 I4 50 I 5
+SECTION S2 RuedelaCroisette I1 I5 50 I 5
+SECTION S3 RuedelaFontaineNoisetier I1 I2 50 I 5
+SECTION S4 Ruedel'Église I2 I7 50 I 5
+# ---- Rue 2 ----
+SECTION S5 RuedelaFontaineNoisetier I2 I1 50 I 5
+SECTION S6 RuedelaFontaineNoisetier I2 I9 50 I 5
+SECTION S7 RuedelaCroisette I3 I5 50 I 5
+SECTION S8 RuedeCense I4 I1 50 I 5
+# ---- Rue 3 ----
+SECTION S9 RuedelaGloriette I4 I11 50 I 5
+SECTION S10 RuedelaCroisette I5 I3 50 I 5
+SECTION S11 RuedelaCroisette I5 I1 50 I 5
+SECTION S12 ImpassedelaMaisonBrûlée I5 I12 50 I 5
+# ---- Rue 4 ----
+SECTION S13 RueInconnue I6 I11 50 I 5
+SECTION S14 Ruedel'Église I7 I8 50 I 5
+SECTION S15 Ruedel'Église I7 I10 50 I 5
+SECTION S16 Ruedel'Église I7 I2 50 I 5
+# ---- Rue 5 ----
+SECTION S17 Ruedel'Église I8 I7 50 I 5
+SECTION S18 Ruedel'Église I8 I10 50 I 5
+SECTION S19 Ruedel'Église I8 I9 50 I 5
+SECTION S20 Ruedel'Église I9 I8 50 I 5
+# ---- Rue 6 ----
+SECTION S21 RuedelaFontaineNoisetier I9 I2 50 I 5
+SECTION S22 Ruedel'Église I10 I8 50 I 5
+SECTION S23 Ruedel'Église I10 I7 50 I 5
+SECTION S24 Ruedel'Église I10 I11 50 I 5
+# ---- Rue 7 ----
+SECTION S25 RueInconnue I11 I6 50 I 5
+SECTION S26 RuedelaGloriette I11 I4 50 I 5
+SECTION S27 Ruedel'Église I11 I10 50 I 5
+SECTION S28 ImpassedelaMaisonBrûlée I12 I5 50 I 5
