@@ -71,4 +71,51 @@ public class Graphe {
             }
         }
     }
+    public List<List<Arc>> tournéesEuleriennes(Intersection depart, int maxBatiments) {
+        List<List<Arc>> tournees = new ArrayList<>();
+        Stack<Intersection> pile = new Stack<>();
+        pile.push(depart);
+
+        List<Arc> currentTournee = new ArrayList<>();
+        int batimentsCourants = 0;
+
+        while (!pile.isEmpty()) {
+            Intersection current = pile.peek();
+            Arc nextArc = null;
+
+            // Chercher une arête non utilisée
+            for (Arc a : current.sortants) {
+                if (!a.utilise) {
+                    nextArc = a;
+                    break;
+                }
+            }
+
+            if (nextArc != null) {
+                nextArc.utilise = true;
+                pile.push(nextArc.arrivee);
+
+                // Ajouter à la tournée en cours
+                if (batimentsCourants + nextArc.nbBatiments > maxBatiments) {
+                    // Limite atteinte → nouvelle tournée
+                    tournees.add(currentTournee);
+                    currentTournee = new ArrayList<>();
+                    batimentsCourants = 0;
+                }
+
+                currentTournee.add(nextArc);
+                batimentsCourants += nextArc.nbBatiments;
+
+            } else {
+                pile.pop();
+            }
+        }
+
+        if (!currentTournee.isEmpty()) {
+            tournees.add(currentTournee); // ajouter la dernière tournée
+        }
+
+        return tournees;
+    }
+
 }
