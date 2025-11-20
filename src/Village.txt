@@ -1,35 +1,83 @@
-# --- Sommets (carrefours) ---
-Sommets: 10
-1 2 3 4 5 6 7 8 9 10
+# === LISTE DES INTERSECTIONS ===
+INTERSECTION I1 0 0
+INTERSECTION I2 50 0
+INTERSECTION I3 100 0
+INTERSECTION I4 150 0
+INTERSECTION I5 200 0
 
-# --- Arêtes (Rues) ---
-# Format : u v distance_m
-Aretes:
-1 2 120
-2 3 80
-3 4 150
-2 5 200
-5 6 140
-6 7 90
-3 8 110
-8 9 130
-9 10 160
-4 10 180
+INTERSECTION I6 0 40
+INTERSECTION I7 50 40
+INTERSECTION I8 100 40
+INTERSECTION I9 150 40
+INTERSECTION I10 200 40
 
-# --- Habitations ---
-# Chaque habitation est placée "sur une arête".
-# Format : HabitationID: u v position_m
-# position_m = distance depuis u (numérotation américaine)
+INTERSECTION I11 0 80
+INTERSECTION I12 50 80
+INTERSECTION I13 100 80
+INTERSECTION I14 150 80
+INTERSECTION I15 200 80
 
-Habitations:
-H1: 1 2 40
-H2: 2 3 70
-H3: 3 8 45
-H4: 5 6 100
-H5: 9 10 40
+INTERSECTION I16 0 120
+INTERSECTION I17 50 120
+INTERSECTION I18 100 120
+INTERSECTION I19 150 120
+INTERSECTION I20 200 120
 
-# --- Bâtiments publics (exemple) ---
-# Même format que habitations
-Batiments:
-Mairie: 3 4 60
-Ecole: 2 5 50
+INTERSECTION I21 0 160
+INTERSECTION I22 50 160
+INTERSECTION I23 100 160
+INTERSECTION I24 150 160
+INTERSECTION I25 200 160
+
+INTERSECTION I26 0 200
+INTERSECTION I27 50 200
+INTERSECTION I28 100 200
+INTERSECTION I29 150 200
+INTERSECTION I30 200 200
+
+
+# === 30 RUES (chaque rue composée de 1 à plusieurs sections) ===
+
+# ---- Rue 1 : Rue du Centre ----
+SECTION S1 RueCentre I1 I2 50 D 8
+SECTION S2 RueCentre I2 I3 50 D 5
+SECTION S3 RueCentre I3 I4 50 D 6
+SECTION S4 RueCentre I4 I5 50 D 4
+
+# ---- Rue 2 : Rue des Écoles ----
+SECTION S5 RueEcoles I6 I7 50 D 10
+SECTION S6 RueEcoles I7 I8 50 D 7
+SECTION S7 RueEcoles I8 I9 50 D 6
+SECTION S8 RueEcoles I9 I10 50 D 3
+
+# ---- Rue 3 : Rue de la Gare ----
+SECTION S9 RueGare I11 I12 50 D 12
+SECTION S10 RueGare I12 I13 50 D 6
+SECTION S11 RueGare I13 I14 50 D 7
+SECTION S12 RueGare I14 I15 50 D 5
+
+# ---- Rue 4 : Rue du Stade ----
+SECTION S13 RueStade I16 I17 50 D 10
+SECTION S14 RueStade I17 I18 50 D 9
+SECTION S15 RueStade I18 I19 50 D 7
+SECTION S16 RueStade I19 I20 50 D 3
+
+# ---- Rue 5 : Rue des Jardins ----
+SECTION S17 RueJardins I21 I22 50 D 4
+SECTION S18 RueJardins I22 I23 50 D 6
+SECTION S19 RueJardins I23 I24 50 D 7
+SECTION S20 RueJardins I24 I25 50 D 3
+
+# ---- Rue 6 : Avenue Nord-Sud ----
+SECTION S21 AvenueNordSud I1 I6 40 D 12
+SECTION S22 AvenueNordSud I6 I11 40 D 8
+SECTION S23 AvenueNordSud I11 I16 40 D 5
+SECTION S24 AvenueNordSud I16 I21 40 D 4
+SECTION S25 AvenueNordSud I21 I26 40 D 3
+
+# ---- Rue 7 : Avenue Est-Ouest ----
+SECTION S26 AvenueEstOuest I5 I10 40 D 5
+SECTION S27 AvenueEstOuest I10 I15 40 D 6
+SECTION S28 AvenueEstOuest I15 I20 40 D 4
+SECTION S29 AvenueEstOuest I20 I25 40 D 3
+SECTION S30 AvenueEstOuest I25 I30 40 D 2
