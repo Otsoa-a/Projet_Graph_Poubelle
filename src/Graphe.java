@@ -71,6 +71,7 @@ public class Graphe {
             }
         }
     }
+
     public List<List<Arc>> tournéesEuleriennes(Intersection depart, int maxBatiments) {
         List<List<Arc>> tournees = new ArrayList<>();
         Stack<Intersection> pile = new Stack<>();
@@ -94,10 +95,8 @@ public class Graphe {
             if (nextArc != null) {
                 nextArc.utilise = true;
                 pile.push(nextArc.arrivee);
-
-                // Ajouter à la tournée en cours
+                //on ajoute à la tournée l'arc seulement si le camion ne dépasse pas sa limite de stockage
                 if (batimentsCourants + nextArc.nbBatiments > maxBatiments) {
-                    // Limite atteinte → nouvelle tournée
                     tournees.add(currentTournee);
                     currentTournee = new ArrayList<>();
                     batimentsCourants = 0;
@@ -117,5 +116,4 @@ public class Graphe {
 
         return tournees;
     }
-
 }
