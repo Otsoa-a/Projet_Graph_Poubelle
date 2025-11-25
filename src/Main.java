@@ -8,7 +8,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         Graphe g = new Graphe();
-        g.chargerDepuisFichier("loix.txt");
+        g.chargerDepuisFichier("paris.txt");
 
         System.out.println("Intersections chargées : " + g.intersections.size());
 
