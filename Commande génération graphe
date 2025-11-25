@@ -1,0 +1,1 @@
+PS C:\Users\[nom]> dot -Tpng [emplacement du fichier.dot] -o [emplacement du fichier .png]

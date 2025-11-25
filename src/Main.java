@@ -38,7 +38,7 @@ public class Main {
             }
             System.out.println();
         }
-
+        //Génération du graphe
         StringBuilder dot = new StringBuilder("digraph G {\n");
         dot.append("node [shape=circle, style=filled, color=lightblue];\n");
 
@@ -46,7 +46,6 @@ public class Main {
 
         for (Intersection i : g.intersections.values()) {
             for (Arc a : i.sortants) {
-                // Clé unique pour chaque arc
                 String key = i.id + "->" + a.arrivee.id + ":" + a.nom;
                 if (!arcsAjoutes.contains(key)) {
                     dot.append("  \"").append(i.id).append("\" -> \"")
@@ -56,7 +55,6 @@ public class Main {
                 }
             }
         }
-
         dot.append("}");
         Files.write(Paths.get("graphe.dot"), dot.toString().getBytes());
     }
