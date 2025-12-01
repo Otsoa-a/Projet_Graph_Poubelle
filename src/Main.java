@@ -8,7 +8,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         Graphe g = new Graphe();
-        g.chargerDepuisFichier("vincennes_sections_num.txt");
+        g.chargerDepuisFichier("Paname.txt");
 
         System.out.println("Intersections chargées : " + g.intersections.size());
 
@@ -19,11 +19,11 @@ public class Main {
         System.out.println("\n=== Test Dijkstra depuis une adresse ===");
 
         // Adresse de départ et d'arrivée
-        String rueDep = "RueduMidi";
-        int numDep = 12;
+        String rueDep = "AvenuedeVersailles";
+        int numDep = 51;
 
-        String rueArr = "RueVillebois-Mareuil";
-        int numArr = 3;
+        String rueArr = "RuedesÉcoles";
+        int numArr = 11;
 
         var chemin = g.DijkstraAdresse(rueDep, numDep, rueArr, numArr);
 
