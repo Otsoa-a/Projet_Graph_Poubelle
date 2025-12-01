@@ -5,6 +5,8 @@ public class Arc {
     public final boolean sensUnique;
     public final Intersection depart;
     public final Intersection arrivee;
+    public int numeroDebut;
+    public int numeroFin;
 
     boolean utilise = false;
 

@@ -8,7 +8,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         Graphe g = new Graphe();
-        g.chargerDepuisFichier("paris.txt");
+        g.chargerDepuisFichier("vincennes.txt");
 
         System.out.println("Intersections chargées : " + g.intersections.size());
 
@@ -17,13 +17,13 @@ public class Main {
         }
 
         System.out.println("=== Test Dijkstra ===");
-        var chemin = Dijkstra.shortestPath(g, "I1", "I11");
+        var chemin = g.Dijkstra("I1", "I200");
 
         System.out.println("Chemin obtenu :");
         for (var inter : chemin) {
             System.out.println(" -> " + inter.id);
         }
-
+        /*
         Intersection depart = g.getOrCreate("I1");
         int maxBatiments = 25;
 
@@ -38,7 +38,21 @@ public class Main {
             }
             System.out.println();
         }
-        //Génération du graphe
+        */
+
+        System.out.println("=== Test recherche adresse ===");
+        String rueTest = "RueduMidi";   // change par un vrai nom de rue qui existe dans ton fichier
+        int numeroTest = 9;            // le numéro que tu veux tester
+
+        Intersection proche = g.trouverIntersection(rueTest, numeroTest);
+
+        if (proche != null) {
+            System.out.println("Pour " + rueTest + " n°" + numeroTest + " : intersection la plus proche = " + proche.id);
+        } else {
+            System.out.println("Rue ou numéro non trouvé !");
+        }
+
+        //méthode qui s'occupe de la génération du graphe
         StringBuilder dot = new StringBuilder("digraph G {\n");
         dot.append("node [shape=circle, style=filled, color=lightblue];\n");
 
