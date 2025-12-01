@@ -91,6 +91,22 @@ public class Graphe {
             assignerNumeros();
         }
     }
+
+    public List<Intersection> DijkstraAdresse(
+            String rueDepart, int numDepart,
+            String rueArrivee, int numArrivee
+    ) {
+        Intersection iDep = trouverIntersection(rueDepart, numDepart);
+        Intersection iArr = trouverIntersection(rueArrivee, numArrivee);
+
+        if (iDep == null || iArr == null) {
+            System.out.println("Adresse introuvable !");
+            return null;
+        }
+
+        return Dijkstra(iDep.id, iArr.id);
+    }
+
     //méthode dijkstra qui calcule le plus court chemin entre deux intersections
     public List<Intersection> Dijkstra (String depart, String arrivee) {
         Map<Intersection, Double> dist = new HashMap<>();

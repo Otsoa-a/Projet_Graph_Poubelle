@@ -8,7 +8,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         Graphe g = new Graphe();
-        g.chargerDepuisFichier("vincennes.txt");
+        g.chargerDepuisFichier("vincennes_sections_num.txt");
 
         System.out.println("Intersections chargées : " + g.intersections.size());
 
@@ -16,13 +16,50 @@ public class Main {
             System.out.println(i.id + " : " + i.sortants.size() + " arcs sortants");
         }
 
-        System.out.println("=== Test Dijkstra ===");
-        var chemin = g.Dijkstra("I1", "I200");
+        System.out.println("\n=== Test Dijkstra depuis une adresse ===");
 
-        System.out.println("Chemin obtenu :");
-        for (var inter : chemin) {
-            System.out.println(" -> " + inter.id);
+        // Adresse de départ et d'arrivée
+        String rueDep = "RueduMidi";
+        int numDep = 12;
+
+        String rueArr = "RueVillebois-Mareuil";
+        int numArr = 3;
+
+        var chemin = g.DijkstraAdresse(rueDep, numDep, rueArr, numArr);
+
+        if (chemin == null || chemin.isEmpty()) {
+            System.out.println("⚠ Aucun chemin trouvé !");
+        } else {
+            System.out.println("\nChemin obtenu depuis " + rueDep + " n°" + numDep +
+                    " jusqu'à " + rueArr + " n°" + numArr + " :");
+
+            for (var inter : chemin) {
+                System.out.println(" -> " + inter.id);
+            }
+
+            // 🔥 Afficher maintenant les rues empruntées
+            System.out.println("\n=== Rues empruntées ===");
+
+            for (int i = 0; i < chemin.size() - 1; i++) {
+                Intersection a = chemin.get(i);
+                Intersection b = chemin.get(i + 1);
+
+                // Trouver l'arc correspondant
+                Arc arc = a.sortants.stream()
+                        .filter(x -> x.arrivee == b)
+                        .findFirst()
+                        .orElse(null);
+
+                if (arc != null) {
+                    System.out.println("De " + a.id + " à " + b.id + " par la rue : " + arc.nom);
+                } else {
+                    System.out.println("⚠ Aucun arc entre " + a.id + " et " + b.id);
+                }
+            }
         }
+
+
+
         /*
         Intersection depart = g.getOrCreate("I1");
         int maxBatiments = 25;
