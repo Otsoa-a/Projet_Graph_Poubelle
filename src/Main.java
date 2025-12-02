@@ -1,114 +1,174 @@
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws Exception {
 
+        Scanner sc = new Scanner(System.in);
         Graphe g = new Graphe();
         g.chargerDepuisFichier("Paname.txt");
 
-        System.out.println("Intersections chargées : " + g.intersections.size());
+        System.out.println("Graphe chargé : " + g.intersections.size() + " intersections.");
 
-        for (Intersection i : g.intersections.values()) {
-            System.out.println(i.id + " : " + i.sortants.size() + " arcs sortants");
-        }
+        while (true) {
+            System.out.println("\n===== MENU =====");
+            System.out.println("1 - Afficher les intersections");
+            System.out.println("2 - Dijkstra depuis une adresse");
+            System.out.println("3 - Tournées depuis une adresse");
+            System.out.println("4 - Recherche d'intersection proche");
+            System.out.println("5 - Générer fichier graphe.dot");
+            System.out.println("6 - MST + tournées depuis points de collecte");
+            System.out.println("0 - Quitter");
+            System.out.print("Choix : ");
+            int choix = sc.nextInt();
+            sc.nextLine(); // consommer le retour chariot
 
-        System.out.println("\n=== Test Dijkstra depuis une adresse ===");
+            switch (choix) {
 
-        // Adresse de départ et d'arrivée
-        String rueDep = "AvenuedeVersailles";
-        int numDep = 51;
-
-        String rueArr = "RuedesÉcoles";
-        int numArr = 11;
-
-        var chemin = g.DijkstraAdresse(rueDep, numDep, rueArr, numArr);
-
-        if (chemin == null || chemin.isEmpty()) {
-            System.out.println("⚠ Aucun chemin trouvé !");
-        } else {
-            System.out.println("\nChemin obtenu depuis " + rueDep + " n°" + numDep +
-                    " jusqu'à " + rueArr + " n°" + numArr + " :");
-
-            for (var inter : chemin) {
-                System.out.println(" -> " + inter.id);
-            }
-
-            // 🔥 Afficher maintenant les rues empruntées
-            System.out.println("\n=== Rues empruntées ===");
-
-            for (int i = 0; i < chemin.size() - 1; i++) {
-                Intersection a = chemin.get(i);
-                Intersection b = chemin.get(i + 1);
-
-                // Trouver l'arc correspondant
-                Arc arc = a.sortants.stream()
-                        .filter(x -> x.arrivee == b)
-                        .findFirst()
-                        .orElse(null);
-
-                if (arc != null) {
-                    System.out.println("De " + a.id + " à " + b.id + " par la rue : " + arc.nom);
-                } else {
-                    System.out.println("⚠ Aucun arc entre " + a.id + " et " + b.id);
+                case 1 -> {
+                    System.out.println("\n--- Intersections ---");
+                    for (Intersection i : g.intersections.values())
+                        System.out.println(i.id + " : " + i.sortants.size() + " arcs sortants");
                 }
-            }
-        }
 
+                case 2 -> {
+                    System.out.print("Nom rue départ : ");
+                    String rueDep = sc.nextLine();
+                    System.out.print("Numéro départ : ");
+                    int numDep = sc.nextInt();
+                    sc.nextLine();
+                    System.out.print("Nom rue arrivée : ");
+                    String rueArr = sc.nextLine();
+                    System.out.print("Numéro arrivée : ");
+                    int numArr = sc.nextInt();
+                    sc.nextLine();
 
+                    var chemin = g.DijkstraAdresse(rueDep, numDep, rueArr, numArr);
+                    if (chemin == null || chemin.isEmpty()) {
+                        System.out.println("⚠ Aucun chemin trouvé !");
+                    } else {
+                        System.out.println("\nChemin obtenu :");
+                        for (var inter : chemin) System.out.println(" -> " + inter.id);
 
-        /*
-        Intersection depart = g.getOrCreate("I1");
-        int maxBatiments = 25;
-
-
-        List<List<Arc>> tournees = g.tournéesEuleriennes(depart,maxBatiments);
-        int numTournee = 1;
-        for (List<Arc> t : tournees) {
-            System.out.println("Tournée " + numTournee++);
-            for (Arc a : t) {
-                System.out.println(a.nom + " de " + a.depart.id + " à " + a.arrivee.id
-                        + " (" + a.nbBatiments + " batiments)");
-            }
-            System.out.println();
-        }
-        */
-
-        System.out.println("=== Test recherche adresse ===");
-        String rueTest = "RueduMidi";   // change par un vrai nom de rue qui existe dans ton fichier
-        int numeroTest = 9;            // le numéro que tu veux tester
-
-        Intersection proche = g.trouverIntersection(rueTest, numeroTest);
-
-        if (proche != null) {
-            System.out.println("Pour " + rueTest + " n°" + numeroTest + " : intersection la plus proche = " + proche.id);
-        } else {
-            System.out.println("Rue ou numéro non trouvé !");
-        }
-
-        //méthode qui s'occupe de la génération du graphe
-        StringBuilder dot = new StringBuilder("digraph G {\n");
-        dot.append("node [shape=circle, style=filled, color=lightblue];\n");
-
-        Set<String> arcsAjoutes = new HashSet<>();
-
-        for (Intersection i : g.intersections.values()) {
-            for (Arc a : i.sortants) {
-                String key = i.id + "->" + a.arrivee.id + ":" + a.nom;
-                if (!arcsAjoutes.contains(key)) {
-                    dot.append("  \"").append(i.id).append("\" -> \"")
-                            .append(a.arrivee.id).append("\"")
-                            .append(" [label=\"").append(a.nom).append(" (").append(a.nbBatiments).append(")\"];\n");
-                    arcsAjoutes.add(key);
+                        System.out.println("\nRues empruntées :");
+                        for (int i = 0; i < chemin.size() - 1; i++) {
+                            Intersection a = chemin.get(i);
+                            Intersection b = chemin.get(i + 1);
+                            Arc arc = a.sortants.stream().filter(x -> x.arrivee == b).findFirst().orElse(null);
+                            System.out.println((arc != null) ? "De " + a.id + " à " + b.id + " par " + arc.nom
+                                    : "⚠ Aucun arc entre " + a.id + " et " + b.id);
+                        }
+                    }
                 }
+
+                case 3 -> {
+                    System.out.print("Nom rue départ : ");
+                    String rue = sc.nextLine();
+                    System.out.print("Numéro départ : ");
+                    int numero = sc.nextInt();
+                    sc.nextLine();
+                    System.out.print("Capacité camion : ");
+                    int capacite = sc.nextInt();
+                    sc.nextLine();
+
+                    var tours = g.tourneesDepuisAdresse(rue, numero, capacite);
+                    if (tours == null || tours.isEmpty()) System.out.println("⚠ Aucun tour trouvé !");
+                    else {
+                        int numTour = 1;
+                        for (List<Arc> tour : tours) {
+                            System.out.println("\n=== Tournée " + numTour++ + " ===");
+                            for (Arc a : tour) System.out.println("Rue : " + a.nom + "\n");
+                        }
+                    }
+                }
+
+                case 4 -> {
+                    System.out.print("Nom rue : ");
+                    String rue = sc.nextLine();
+                    System.out.print("Numéro : ");
+                    int numero = sc.nextInt();
+                    sc.nextLine();
+
+                    Intersection proche = g.trouverIntersection(rue, numero);
+                    if (proche != null)
+                        System.out.println("Intersection la plus proche : " + proche.id);
+                    else
+                        System.out.println("⚠ Rue ou numéro non trouvé !");
+                }
+
+                case 5 -> {
+                    StringBuilder dot = new StringBuilder("digraph G {\n");
+                    dot.append("node [shape=circle, style=filled, color=lightblue];\n");
+                    Set<String> arcsAjoutes = new HashSet<>();
+                    for (Intersection i : g.intersections.values()) {
+                        for (Arc a : i.sortants) {
+                            String key = i.id + "->" + a.arrivee.id + ":" + a.nom;
+                            if (!arcsAjoutes.contains(key)) {
+                                dot.append("  \"").append(i.id).append("\" -> \"")
+                                        .append(a.arrivee.id).append("\"")
+                                        .append(" [label=\"").append(a.nom).append(" (").append(a.nbBatiments).append(")\"];\n");
+                                arcsAjoutes.add(key);
+                            }
+                        }
+                    }
+                    dot.append("}");
+                    Files.write(Paths.get("graphe.dot"), dot.toString().getBytes());
+                    System.out.println("Fichier graphe.dot généré !");
+                }
+
+                case 6 -> {
+                    // Exemple de points de collecte (à adapter)
+                    List<Pointcollecte> pointsCollecte = new ArrayList<>();
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RuedesEntrepreneurs", 18), 45));
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("BoulevardduMontparnasse", 123), 35));
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RuedeCharonne", 2), 100));
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RueNicolasFortin", 6), 44));
+
+                    Pointcollecte depot = pointsCollecte.get(0);
+                    graphereduit gr = new graphereduit(pointsCollecte, g);
+                    List<String[]> mstEdges = MST.prim(gr, depot.id);
+
+                    Map<String, List<String>> arbre = new HashMap<>();
+                    for (String[] edge : mstEdges) {
+                        arbre.computeIfAbsent(edge[0], k -> new ArrayList<>()).add(edge[1]);
+                        arbre.computeIfAbsent(edge[1], k -> new ArrayList<>()).add(edge[0]);
+                    }
+
+                    List<String> ordreVisite = new ArrayList<>();
+                    MSTParcours.parcoursPrefixe(depot.id, arbre, new HashSet<>(), ordreVisite);
+
+                    Map<String, Pointcollecte> contenanceMap = new HashMap<>();
+                    for (Pointcollecte p : pointsCollecte) contenanceMap.put(p.id, p);
+
+                    System.out.print("Capacité camion : ");
+                    int capaciteCamion = sc.nextInt();
+                    sc.nextLine();
+
+                    List<List<Pointcollecte>> tourneesMST = g.decouperTournees(ordreVisite, contenanceMap, capaciteCamion);
+
+                    int numTour = 1;
+                    for (List<Pointcollecte> tournee : tourneesMST) {
+                        System.out.println("\n=== Tournée MST " + numTour++ + " ===");
+                        for (Pointcollecte p : tournee) {  // <-- ici, on parcourt directement les objets Pointcollecte
+                            if (p != null && p.inter != null) {
+                                System.out.println("Point " + p.inter.id
+                                        + " - Rue : " + p.inter.getRue()
+                                        + " - Numéro : " + p.inter.getNumero()
+                                        + " - Contenance : " + p.contenance);
+                            }
+                        }
+                    }
+                }
+
+                case 0 -> {
+                    System.out.println("Au revoir !");
+                    sc.close();
+                    return;
+                }
+
+                default -> System.out.println("⚠ Choix invalide !");
             }
         }
-        dot.append("}");
-        Files.write(Paths.get("graphe.dot"), dot.toString().getBytes());
     }
-
-
 }

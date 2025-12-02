@@ -184,4 +184,77 @@ public class Graphe {
         }
         return tournees;
     }
+
+    public List<List<Arc>> tourneesDepuisAdresse(String rue, int numero, int maxBatiments) {
+
+        Intersection depart = trouverIntersection(rue, numero);
+        if (depart == null) {
+            System.out.println("Adresse introuvable !");
+            return null;
+        }
+
+        return tournéesEuleriennes(depart, maxBatiments);
+    }
+
+
+    List<List<Pointcollecte>> decouperTournees(List<String> ordreVisite, Map<String, Pointcollecte> contenanceMap, int capaciteCamion) {
+        List<List<Pointcollecte>> tournees = new ArrayList<>();
+        List<Pointcollecte> currentTournee = new ArrayList<>();
+        int charge = 0;
+
+        for (String id : ordreVisite) {
+            Pointcollecte p = contenanceMap.get(id);
+
+            if (p.contenance > capaciteCamion) {
+                // Cas où un seul point dépasse la capacité
+                // On met directement dans une tournée séparée
+                List<Pointcollecte> t = new ArrayList<>();
+                t.add(p);
+                tournees.add(t);
+                continue;
+            }
+
+            if (charge + p.contenance > capaciteCamion) {
+                // On termine la tournée actuelle
+                tournees.add(currentTournee);
+                currentTournee = new ArrayList<>();
+                charge = 0;
+            }
+
+            currentTournee.add(p);
+            charge += p.contenance;
+        }
+
+        if (!currentTournee.isEmpty()) tournees.add(currentTournee);
+
+        return tournees;
+    }
+
+
+    public double distanceEntre(Intersection depart, Intersection arrivee) {
+        if (depart == null || arrivee == null) return Double.POSITIVE_INFINITY;
+
+        Map<Intersection, Double> dist = new HashMap<>();
+        PriorityQueue<Intersection> pq = new PriorityQueue<>(Comparator.comparingDouble(dist::get));
+
+        for (Intersection i : intersections.values()) dist.put(i, Double.POSITIVE_INFINITY);
+        dist.put(depart, 0.0);
+        pq.add(depart);
+
+        while (!pq.isEmpty()) {
+            Intersection u = pq.poll();
+            if (u == arrivee) break;
+
+            for (Arc a : u.sortants) {
+                Intersection v = a.arrivee;
+                double alt = dist.get(u) + a.longueur;
+                if (alt < dist.get(v)) {
+                    dist.put(v, alt);
+                    pq.add(v);
+                }
+            }
+        }
+        return dist.getOrDefault(arrivee, Double.POSITIVE_INFINITY);
+    }
+
 }
