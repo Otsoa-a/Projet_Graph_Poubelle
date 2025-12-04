@@ -8,6 +8,7 @@ class MST {
 
         visited.add(depotId);
 
+
         // Ajouter les arcs initiaux
         for (Map.Entry<String, Double> e : gr.distances.get(depotId).entrySet()) {
             pq.add(new String[]{depotId, e.getKey(), String.valueOf(e.getValue())});
