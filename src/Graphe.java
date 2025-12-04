@@ -1,7 +1,17 @@
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Graphe {
+    // --- Centres fournis par toi ---
+    private final List<String> centresQuartiers = List.of(
+            "I2765","I955","I1023","I3724","I4758","I1443","I93","I5009",
+            "I3158","I4211","I816","I1183","I1374","I4832","I8076","I2660"
+    );
+
+    // Résultats
+    public Map<Intersection, Integer> quartierDe = new HashMap<>();
+    public Map<Arc, Integer> quartierArc = new HashMap<>();
 
     public Map<String, Intersection> intersections = new HashMap<>(); //structure pour stocker notre graphe
     private Map<String, List<Arc>> arcsParRue = new HashMap<>();
@@ -283,5 +293,174 @@ public class Graphe {
         }
         return dist.getOrDefault(arrivee, Double.POSITIVE_INFINITY);
     }
+
+    // --- Partition du graphe en quartiers en fonction des centres ---
+    public void partitionnerQuartiers() {
+
+        Queue<Intersection> file = new ArrayDeque<>();
+        Map<Intersection, Integer> dist = new HashMap<>();
+
+        // Initialisation
+        int q = 0;
+        for (String id : centresQuartiers) {
+            Intersection c = intersections.get(id);
+            if (c != null) {
+                quartierDe.put(c, q);
+                dist.put(c, 0);
+                file.add(c);
+                q++;
+            }
+        }
+
+        // BFS multi-source
+        while (!file.isEmpty()) {
+            Intersection u = file.poll();
+            int qU = quartierDe.get(u);
+
+            for (Arc a : u.sortants) {
+                Intersection v = a.arrivee;
+                if (!dist.containsKey(v)) {
+                    dist.put(v, dist.get(u) + 1);
+                    quartierDe.put(v, qU);
+                    file.add(v);
+                }
+            }
+            for (Arc a : u.entrants) {
+                Intersection v = a.depart;
+                if (!dist.containsKey(v)) {
+                    dist.put(v, dist.get(u) + 1);
+                    quartierDe.put(v, qU);
+                    file.add(v);
+                }
+            }
+        }
+
+        // Attribuer un quartier aux arcs (quartier du départ)
+        for (Arc a : tousLesArcs) {
+            quartierArc.put(a, quartierDe.get(a.depart));
+        }
+
+        System.out.println("Partition terminée : " + q + " quartiers définis.");
+    }
+    // --- Coloration des quartiers ---
+    public Map<Integer, Integer> colorierQuartiers() {
+
+        // Construire adjacency quartier → régions voisines
+        Map<Integer, Set<Integer>> adj = new HashMap<>();
+        for (Arc a : tousLesArcs) {
+            int q1 = quartierArc.get(a);
+            int q2 = quartierDe.get(a.arrivee);
+            if (q1 != q2) {
+                adj.computeIfAbsent(q1, k -> new HashSet<>()).add(q2);
+                adj.computeIfAbsent(q2, k -> new HashSet<>()).add(q1);
+            }
+        }
+
+        // Coloration gloutonne
+        Map<Integer, Integer> couleur = new HashMap<>();
+
+        List<Integer> quartiers = new ArrayList<>(adj.keySet());
+        quartiers.sort(Integer::compare);
+
+        for (int q : quartiers) {
+            Set<Integer> interdit = adj.get(q).stream()
+                    .map(couleur::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            int c = 0;
+            while (interdit.contains(c)) c++;
+
+            couleur.put(q, c);
+        }
+
+        System.out.println("Coloration terminée.");
+        return couleur;
+    }
+    // --- Génération des tournées optimisées quartier par quartier ---
+    public Map<Integer, List<List<Arc>>> genererTourneesOptimisees(int capaciteCamion) {
+
+        Map<Integer, List<List<Arc>>> resultat = new HashMap<>();
+
+        // Grouper les arcs par quartier
+        Map<Integer, List<Arc>> arcsParQuartier = new HashMap<>();
+        for (Arc a : tousLesArcs) {
+            int q = quartierArc.get(a);
+            arcsParQuartier.computeIfAbsent(q, k -> new ArrayList<>()).add(a);
+        }
+
+        // Pour chaque quartier
+        for (int q : arcsParQuartier.keySet()) {
+
+            List<Arc> arcsQ = arcsParQuartier.get(q);
+            Set<Arc> nonCollectes = new HashSet<>(arcsQ);
+            List<List<Arc>> tournees = new ArrayList<>();
+
+            // centre du quartier
+            Intersection centre = null;
+            for (String id : centresQuartiers) {
+                Intersection c = intersections.get(id);
+                if (c != null && quartierDe.get(c) == q) {
+                    centre = c;
+                    break;
+                }
+            }
+            if (centre == null) continue;
+
+            // Tournées successives
+            while (!nonCollectes.isEmpty()) {
+
+                List<Arc> tournee = new ArrayList<>();
+                int charge = 0;
+                Intersection pos = centre;
+
+                while (true) {
+
+                    // Trouver l’arc non collecté le plus proche depuis pos
+                    Arc meilleur = null;
+                    double meilleureDist = Double.POSITIVE_INFINITY;
+
+                    for (Arc a : nonCollectes) {
+                        double d = distanceEntre(pos, a.depart);
+                        if (d < meilleureDist) {
+                            meilleureDist = d;
+                            meilleur = a;
+                        }
+                    }
+
+                    if (meilleur == null) break;
+
+                    // Vérifier la capacité camion
+                    if (charge + meilleur.nbBatiments > capaciteCamion)
+                        break;
+
+                    // Collecte
+                    tournee.add(meilleur);
+                    charge += meilleur.nbBatiments;
+                    nonCollectes.remove(meilleur);
+
+                    pos = meilleur.arrivee;
+                }
+
+                if (!tournee.isEmpty()) tournees.add(tournee);
+            }
+
+            resultat.put(q, tournees);
+        }
+
+        System.out.println("Tournées optimisées générées.");
+        return resultat;
+    }
+    public List<Arc> getTousLesArcs() {
+        return tousLesArcs;
+    }
+    public List<Arc> getArcsDuQuartier(int qid) {
+        List<Arc> arcsQuartier = new ArrayList<>();
+        for (Map.Entry<Arc,Integer> e : quartierArc.entrySet()) {
+            if (e.getValue() == qid) arcsQuartier.add(e.getKey());
+        }
+        return arcsQuartier;
+    }
+
 
 }

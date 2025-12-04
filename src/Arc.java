@@ -18,6 +18,10 @@ public class Arc {
         this.depart = depart;
         this.arrivee = arrivee;
     }
+    public Arc copierAvecNbBatiments(int nb) {
+        Arc copie = new Arc(this.nom, nb, this.longueur, this.sensUnique, this.depart, this.arrivee);
+        return copie;
+    }
 
     @Override
     public String toString() {

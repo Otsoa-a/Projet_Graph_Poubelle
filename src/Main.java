@@ -19,6 +19,7 @@ public class Main {
             System.out.println("4 - Recherche d'intersection proche");
             System.out.println("5 - Générer fichier graphe.dot");
             System.out.println("6 - MST + tournées depuis points de collecte");
+            System.out.println("7 - Partitionner en quartiers / colorer / générer tournées optimisées");
             System.out.println("0 - Quitter");
             System.out.print("Choix : ");
             int choix = sc.nextInt();
@@ -168,6 +169,112 @@ public class Main {
                         }
                     }
                 }
+
+                case 7 -> {
+                    // Centres fournis par l'utilisateur (16 centres)
+                    List<String> centres = List.of(
+                            "I2765","I955","I1023","I3724","I4758","I1443","I93","I5009",
+                            "I3158","I4211","I816","I1183","I1374","I4832","I8076","I2660"
+                    );
+
+                    // Partitionner en quartiers
+                    g.partitionnerQuartiers();
+
+                    int nbQuartiers = new HashSet<>(g.quartierArc.values()).size();
+                    System.out.println("Partition en quartiers effectuée. Nombre de quartiers : " + nbQuartiers);
+
+                    // Colorier les quartiers
+                    Map<Integer, Integer> couleurQuartier = g.colorierQuartiers();
+
+                    System.out.println("\n=== Coloration des quartiers ===");
+                    for (Map.Entry<Integer, Integer> e : couleurQuartier.entrySet()) {
+                        System.out.println("Quartier " + e.getKey() + " -> couleur " + e.getValue());
+                    }
+
+                    // 🔵 NOUVEL AFFICHAGE — rues classées par quartier
+                    System.out.println("\n=== Rues par quartier ===");
+                    for (int qid : new HashSet<>(g.quartierArc.values())) {
+                        System.out.println("Quartier " + qid + " : ");
+                        for (Arc a : g.getArcsDuQuartier(qid)) {
+                            System.out.println("  - " + a.toString());
+                        }
+                        System.out.println();
+                    }
+
+                    // Réinitialiser les arcs
+                    for (Arc a : g.getTousLesArcs()) a.utilise = false;
+
+                    // Demander capacité camion
+                    System.out.print("Capacité camion pour simulation des tournées : ");
+                    int cap = sc.nextInt();
+                    sc.nextLine();
+
+                    // Préparer les arcs par quartier
+                    Map<Integer, List<Arc>> arcsParQuartier = new HashMap<>();
+                    for (int qid : new HashSet<>(g.quartierArc.values())) {
+                        List<Arc> arcsQuartier = g.getArcsDuQuartier(qid);
+                        List<Arc> copies = new ArrayList<>();
+                        for (Arc a : arcsQuartier) copies.add(a.copierAvecNbBatiments(a.nbBatiments));
+                        arcsParQuartier.put(qid, copies);
+                    }
+
+                    // Récupérer toutes les couleurs ordonnées
+                    Set<Integer> couleursSet = new HashSet<>(couleurQuartier.values());
+                    List<Integer> couleursOrdonnees = new ArrayList<>(couleursSet);
+                    Collections.sort(couleursOrdonnees);
+
+                    int jour = 1;
+                    boolean resteARamasser = true;
+
+                    while (resteARamasser) {
+                        resteARamasser = false;
+
+                        // 🔵 Une seule couleur pour ce jour
+                        int couleurDuJour = couleursOrdonnees.get((jour - 1) % couleursOrdonnees.size());
+
+                        System.out.println("\n=== Jour " + jour + " — couleur " + couleurDuJour + " ===");
+
+                        // Tous les quartiers de cette couleur
+                        for (int qid : arcsParQuartier.keySet()) {
+                            if (couleurQuartier.get(qid) != couleurDuJour) continue;
+
+                            List<Arc> arcsRestants = arcsParQuartier.get(qid);
+                            if (arcsRestants.isEmpty()) continue;
+
+                            resteARamasser = true;
+
+                            int capaciteRestante = cap;
+                            List<Arc> tourDuJour = new ArrayList<>();
+
+                            Iterator<Arc> it = arcsRestants.iterator();
+                            while (it.hasNext() && capaciteRestante > 0) {
+                                Arc a = it.next();
+
+                                int prise = Math.min(capaciteRestante, a.nbBatiments);
+                                tourDuJour.add(a.copierAvecNbBatiments(prise));
+                                capaciteRestante -= prise;
+
+                                if (prise == a.nbBatiments) it.remove();
+                                else {
+                                    Arc reste = a.copierAvecNbBatiments(a.nbBatiments - prise);
+                                    it.remove();
+                                    arcsRestants.add(reste);
+                                }
+                            }
+
+                            System.out.println("\nQuartier " + qid + " (couleur " + couleurDuJour +
+                                    ") -> Tournée (" + tourDuJour.size() + " arc) :");
+
+                            for (Arc a : tourDuJour) {
+                                System.out.println("  - " + a.nom + " (" + a.nbBatiments + " maisons)");
+                            }
+                        }
+
+                        jour++;
+                    }
+                }
+
+
 
                 case 0 -> {
                     System.out.println("Au revoir !");
