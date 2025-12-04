@@ -197,38 +197,65 @@ public class Graphe {
     }
 
 
-    List<List<Pointcollecte>> decouperTournees(List<String> ordreVisite, Map<String, Pointcollecte> contenanceMap, int capaciteCamion) {
+    // Ajoute ceci dans ta classe Graphe
+    public List<List<Pointcollecte>> decouperTournees(
+            List<String> ordreVisite,
+            Map<String, Pointcollecte> contenanceMap,
+            int capaciteCamion) {
+
         List<List<Pointcollecte>> tournees = new ArrayList<>();
         List<Pointcollecte> currentTournee = new ArrayList<>();
         int charge = 0;
 
+        if (ordreVisite == null || contenanceMap == null) return tournees;
+
         for (String id : ordreVisite) {
-            Pointcollecte p = contenanceMap.get(id);
+            Pointcollecte origine = contenanceMap.get(id);
+            if (origine == null) continue;
 
-            if (p.contenance > capaciteCamion) {
-                // Cas où un seul point dépasse la capacité
-                // On met directement dans une tournée séparée
-                List<Pointcollecte> t = new ArrayList<>();
-                t.add(p);
-                tournees.add(t);
-                continue;
+            while (origine.contenance > 0) {
+                int espace = capaciteCamion - charge;
+
+                if (espace == 0) {
+                    // Camion plein, on ferme la tournée
+                    if (!currentTournee.isEmpty()) {
+                        tournees.add(currentTournee);
+                    }
+                    currentTournee = new ArrayList<>();
+                    charge = 0;
+                    espace = capaciteCamion;
+                }
+
+                int prise = Math.min(espace, origine.contenance);
+
+                // Créer un point fractionné
+                Pointcollecte prisePt = origine.fractionner(prise);
+
+                currentTournee.add(prisePt);
+                charge += prise;
+
+                // Décrémenter la contenance réelle
+                origine.contenance -= prise;
+
+                // Si camion plein après cette prise, fermer la tournée
+                if (charge >= capaciteCamion) {
+                    tournees.add(currentTournee);
+                    currentTournee = new ArrayList<>();
+                    charge = 0;
+                }
             }
-
-            if (charge + p.contenance > capaciteCamion) {
-                // On termine la tournée actuelle
-                tournees.add(currentTournee);
-                currentTournee = new ArrayList<>();
-                charge = 0;
-            }
-
-            currentTournee.add(p);
-            charge += p.contenance;
         }
 
-        if (!currentTournee.isEmpty()) tournees.add(currentTournee);
+        if (!currentTournee.isEmpty()) {
+            tournees.add(currentTournee);
+        }
 
         return tournees;
     }
+
+
+
+
 
 
     public double distanceEntre(Intersection depart, Intersection arrivee) {

@@ -118,13 +118,14 @@ public class Main {
                 }
 
                 case 6 -> {
-                    // Exemple de points de collecte (à adapter)
                     List<Pointcollecte> pointsCollecte = new ArrayList<>();
-                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RuedesEntrepreneurs", 18), 45));
-                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("BoulevardduMontparnasse", 123), 35));
-                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RuedeCharonne", 2), 100));
-                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RueNicolasFortin", 6), 44));
-
+                    //DEPOT
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RuedesEntrepreneurs", 18), 0, "RuedesEntrepreneurs", 18));
+                    //POINT DE COLLECTE
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("BoulevardduMontparnasse", 123), 105, "BoulevardduMontparnasse", 123));
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RueSaint-Honoré", 50), 705, "RueSaint-Honoré", 50));
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RuedeCharonne", 2), 100, "RuedeCharonne", 2));
+                    pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RueNicolasFortin", 6), 105, "RueNicolasFortin", 6));
                     Pointcollecte depot = pointsCollecte.get(0);
                     graphereduit gr = new graphereduit(pointsCollecte, g);
                     List<String[]> mstEdges = MST.prim(gr, depot.id);
@@ -146,16 +147,23 @@ public class Main {
                     sc.nextLine();
 
                     List<List<Pointcollecte>> tourneesMST = g.decouperTournees(ordreVisite, contenanceMap, capaciteCamion);
-
                     int numTour = 1;
                     for (List<Pointcollecte> tournee : tourneesMST) {
-                        System.out.println("\n=== Tournée MST " + numTour++ + " ===");
-                        for (Pointcollecte p : tournee) {  // <-- ici, on parcourt directement les objets Pointcollecte
-                            if (p != null && p.inter != null) {
-                                System.out.println("Point " + p.inter.id
-                                        + " - Rue : " + p.inter.getRue()
-                                        + " - Numéro : " + p.inter.getNumero()
-                                        + " - Contenance : " + p.contenance);
+                        System.out.println("\n=== Tournée de ramassage "+ numTour++ + " ===");
+
+                        // Affichage du dépôt au début
+                        System.out.println("Dépot : " + depot.id
+                                + " - Rue : " + depot.rue
+                                + " - Numéro : " + depot.numero
+                                + " - Contenance : " + depot.contenance);
+
+                        // Affichage des points de collecte de la tournée
+                        for (Pointcollecte pc : tournee) {
+                            if (pc != depot) { // on évite de répéter le dépôt
+                                System.out.println("Point de collecte : " + pc.id
+                                        + " - Rue : " + pc.rue
+                                        + " - Numéro : " + pc.numero
+                                        + " - Contenance : " + pc.contenance);
                             }
                         }
                     }
