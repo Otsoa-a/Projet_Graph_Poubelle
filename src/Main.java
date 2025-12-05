@@ -15,7 +15,7 @@ public class Main {
 
         Scanner sc = new Scanner(System.in);
         Graphe g = new Graphe();
-        g.chargerDepuisFichier("Paname.txt");
+        g.chargerDepuisFichier("vincennes_sections_realnum.txt");
 
         System.out.println("Graphe chargé : " + g.intersections.size() + " intersections.");
 
@@ -86,6 +86,7 @@ public class Main {
                         System.out.println("4 - Ramassage des points de collecte (MST + tournées)");
                         System.out.println("5 - Organisation par jours (partition/colouring/planification) — centres depuis fichier");
                         System.out.println("6 - Recherche d'une intersection proche");
+                        System.out.println("7 - IHM du graphe");
                         System.out.println("R - Retour (changer de rôle)");
                         System.out.println("Q - Quitter");
                         System.out.print("Choix : ");
@@ -493,7 +494,56 @@ public class Main {
                                 else
                                     System.out.println("⚠ Rue ou numéro non trouvé !");
                             }
+                            case '7' -> {
+                                StringBuilder dot = new StringBuilder("digraph G {\n");
+                                dot.append("  rankdir=LR;\n");
+                                dot.append("  graph [splines=true, overlap=false];\n");
+                                dot.append("  node [shape=circle, style=filled, fillcolor=lightblue, fontname=\"Arial\", fontsize=14];\n");
+                                dot.append("  edge [fontname=\"Arial\", fontsize=12, color=gray50];\n");
 
+                                Set<String> arcsAjoutes = new HashSet<>();
+
+                                for (Intersection i : g.intersections.values()) {
+
+                                    // (C) Forme différente pour les intersections "majeures"
+                                    if (i.sortants.size() >= 4) {
+                                        dot.append("  \"").append(i.id).append("\"")
+                                                .append(" [shape=doublecircle, fillcolor=lightgreen];\n");
+                                    } else {
+                                        dot.append("  \"").append(i.id).append("\";\n");
+                                    }
+
+                                    for (Arc a : i.sortants) {
+                                        String key = i.id + "->" + a.arrivee.id + ":" + a.nom;
+
+                                        if (!arcsAjoutes.contains(key)) {
+
+                                            // (A) Couleur en fonction du nombre de bâtiments
+                                            String color;
+                                            if (a.nbBatiments > 10) color = "red";
+                                            else if (a.nbBatiments > 5) color = "orange";
+                                            else color = "green";
+
+                                            // (B) Épaisseur de trait proportionnelle
+                                            int width = Math.min(5, 1 + a.nbBatiments / 3);
+
+                                            dot.append("  \"").append(i.id).append("\" -> \"")
+                                                    .append(a.arrivee.id).append("\"")
+                                                    .append(" [label=\"").append(a.nom)
+                                                    .append(" (").append(a.nbBatiments).append(")\"")
+                                                    .append(", color=\"").append(color).append("\"")
+                                                    .append(", penwidth=").append(width)
+                                                    .append("];\n");
+
+                                            arcsAjoutes.add(key);
+                                        }
+                                    }
+                                }
+
+                                dot.append("}");
+                                Files.write(Paths.get("graphe.dot"), dot.toString().getBytes());
+                                System.out.println("Fichier graphe.dot généré !");
+                            }
                             default -> System.out.println("⚠ Choix invalide !");
                         } // end switch mairie
                     } // end while mairie
