@@ -335,7 +335,7 @@ public class Graphe {
             }
         }
 
-        // Attribuer un quartier aux arcs (quartier du départ)
+        // Attribution d'un quartier au quartier qui l'a découvert
         for (Arc a : tousLesArcs) {
             quartierArc.put(a, quartierDe.get(a.depart));
         }
@@ -356,23 +356,45 @@ public class Graphe {
             }
         }
 
-        // Coloration gloutonne
+        // --- Coloration Welsh–Powell ---
+// adj : Map<Integer, Set<Integer>>  // graphe des quartiers voisins
+
         Map<Integer, Integer> couleur = new HashMap<>();
 
+// 1) Trier les quartiers par degré décroissant
         List<Integer> quartiers = new ArrayList<>(adj.keySet());
-        quartiers.sort(Integer::compare);
+        quartiers.sort((a, b) -> Integer.compare(adj.get(b).size(), adj.get(a).size()));
+
+// 2) Coloration
+        int currentColor = 0;
 
         for (int q : quartiers) {
-            Set<Integer> interdit = adj.get(q).stream()
-                    .map(couleur::get)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
+            if (couleur.containsKey(q)) continue; // déjà colorié
 
-            int c = 0;
-            while (interdit.contains(c)) c++;
+            // attribuer une couleur à q
+            couleur.put(q, currentColor);
 
-            couleur.put(q, c);
+            // essayer de colorier d’autres quartiers avec la même couleur
+            for (int other : quartiers) {
+                if (couleur.containsKey(other)) continue;
+
+                // vérifier que 'other' n'a aucun voisin avec currentColor
+                boolean ok = true;
+                for (int v : adj.get(other)) {
+                    if (couleur.getOrDefault(v, -1) == currentColor) {
+                        ok = false;
+                        break;
+                    }
+                }
+
+                if (ok) {
+                    couleur.put(other, currentColor);
+                }
+            }
+
+            currentColor++; // couleur suivante
         }
+
 
         System.out.println("Coloration terminée.");
         return couleur;
