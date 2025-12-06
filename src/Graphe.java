@@ -3,11 +3,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Graphe {
-    // --- Centres fournis par toi ---
-    private final List<String> centresQuartiers = List.of(
-            "I2765","I955","I1023","I3724","I4758","I1443","I93","I5009",
-            "I3158","I4211","I816","I1183","I1374","I4832","I8076","I2660"
-    );
 
     // Résultats
     public Map<Intersection, Integer> quartierDe = new HashMap<>();
@@ -16,7 +11,6 @@ public class Graphe {
     public Map<String, Intersection> intersections = new HashMap<>(); //structure pour stocker notre graphe
     private Map<String, List<Arc>> arcsParRue = new HashMap<>();
     private List<Arc> tousLesArcs = new ArrayList<>();
-
 
     public Intersection getOrCreate(String id) {
         return intersections.computeIfAbsent(id, Intersection::new); //on ajoute ou on crée une intersection
@@ -51,7 +45,6 @@ public class Graphe {
 
         List<Arc> liste = arcsParRue.get(nomRue);
         if (liste == null) return null;
-
         Arc cible = null;
 
         // Trouver l'arc contenant ce numéro
@@ -67,10 +60,8 @@ public class Graphe {
         // Ratio de position
         int index = numero - cible.numeroDebut + 1;
         double ratio = index / (double)cible.nbBatiments;
-
         return (ratio < 0.5) ? cible.depart : cible.arrivee;
     }
-
 
     //on récup le graphe depuis le fichier texte et on crée un arc pour chaque section et un sommet pour chaque intersection
     public void chargerDepuisFichier(String chemin) throws Exception {
@@ -294,15 +285,16 @@ public class Graphe {
         return dist.getOrDefault(arrivee, Double.POSITIVE_INFINITY);
     }
 
-    // --- Partition du graphe en quartiers en fonction des centres ---
-    public void partitionnerQuartiers() {
+    // --- Partition du graphe en quartiers via une liste de centres fournie ---
+    public void partitionnerParIntersections(List<String> centres) {
 
         Queue<Intersection> file = new ArrayDeque<>();
         Map<Intersection, Integer> dist = new HashMap<>();
+        quartierDe.clear();
+        quartierArc.clear();
 
-        // Initialisation
         int q = 0;
-        for (String id : centresQuartiers) {
+        for (String id : centres) {
             Intersection c = intersections.get(id);
             if (c != null) {
                 quartierDe.put(c, q);
@@ -335,18 +327,17 @@ public class Graphe {
             }
         }
 
-        // Attribution d'un quartier au quartier qui l'a découvert
+        // Attribution des arcs
         for (Arc a : tousLesArcs) {
             quartierArc.put(a, quartierDe.get(a.depart));
         }
-
         System.out.println("Partition terminée : " + q + " quartiers définis.");
     }
     // --- Coloration des quartiers ---
     public Map<Integer, Integer> colorierQuartiers() {
 
-        // Construire adjacency quartier → régions voisines
         Map<Integer, Set<Integer>> adj = new HashMap<>();
+
         for (Arc a : tousLesArcs) {
             int q1 = quartierArc.get(a);
             int q2 = quartierDe.get(a.arrivee);
@@ -356,29 +347,22 @@ public class Graphe {
             }
         }
 
-        // --- Coloration Welsh–Powell ---
-// adj : Map<Integer, Set<Integer>>  // graphe des quartiers voisins
-
         Map<Integer, Integer> couleur = new HashMap<>();
 
-// 1) Trier les quartiers par degré décroissant
+        // Welsh–Powell : trier par degré
         List<Integer> quartiers = new ArrayList<>(adj.keySet());
         quartiers.sort((a, b) -> Integer.compare(adj.get(b).size(), adj.get(a).size()));
 
-// 2) Coloration
         int currentColor = 0;
 
         for (int q : quartiers) {
-            if (couleur.containsKey(q)) continue; // déjà colorié
+            if (couleur.containsKey(q)) continue;
 
-            // attribuer une couleur à q
             couleur.put(q, currentColor);
 
-            // essayer de colorier d’autres quartiers avec la même couleur
             for (int other : quartiers) {
                 if (couleur.containsKey(other)) continue;
 
-                // vérifier que 'other' n'a aucun voisin avec currentColor
                 boolean ok = true;
                 for (int v : adj.get(other)) {
                     if (couleur.getOrDefault(v, -1) == currentColor) {
@@ -386,15 +370,11 @@ public class Graphe {
                         break;
                     }
                 }
-
-                if (ok) {
-                    couleur.put(other, currentColor);
-                }
+                if (ok) couleur.put(other, currentColor);
             }
 
-            currentColor++; // couleur suivante
+            currentColor++;
         }
-
 
         System.out.println("Coloration terminée.");
         return couleur;
@@ -403,33 +383,27 @@ public class Graphe {
     public Map<Integer, List<List<Arc>>> genererTourneesOptimisees(int capaciteCamion) {
 
         Map<Integer, List<List<Arc>>> resultat = new HashMap<>();
-
-        // Grouper les arcs par quartier
         Map<Integer, List<Arc>> arcsParQuartier = new HashMap<>();
+
         for (Arc a : tousLesArcs) {
             int q = quartierArc.get(a);
             arcsParQuartier.computeIfAbsent(q, k -> new ArrayList<>()).add(a);
         }
 
-        // Pour chaque quartier
         for (int q : arcsParQuartier.keySet()) {
-
             List<Arc> arcsQ = arcsParQuartier.get(q);
             Set<Arc> nonCollectes = new HashSet<>(arcsQ);
             List<List<Arc>> tournees = new ArrayList<>();
 
-            // centre du quartier
+            // centre du quartier = intersection dont quartierDe == q
             Intersection centre = null;
-            for (String id : centresQuartiers) {
-                Intersection c = intersections.get(id);
-                if (c != null && quartierDe.get(c) == q) {
-                    centre = c;
+            for (Intersection inter : quartierDe.keySet()) {
+                if (quartierDe.get(inter) == q) {
+                    centre = inter;
                     break;
                 }
             }
             if (centre == null) continue;
-
-            // Tournées successives
             while (!nonCollectes.isEmpty()) {
 
                 List<Arc> tournee = new ArrayList<>();
@@ -437,8 +411,6 @@ public class Graphe {
                 Intersection pos = centre;
 
                 while (true) {
-
-                    // Trouver l’arc non collecté le plus proche depuis pos
                     Arc meilleur = null;
                     double meilleureDist = Double.POSITIVE_INFINITY;
 
@@ -452,15 +424,12 @@ public class Graphe {
 
                     if (meilleur == null) break;
 
-                    // Vérifier la capacité camion
                     if (charge + meilleur.nbBatiments > capaciteCamion)
                         break;
 
-                    // Collecte
                     tournee.add(meilleur);
                     charge += meilleur.nbBatiments;
                     nonCollectes.remove(meilleur);
-
                     pos = meilleur.arrivee;
                 }
 
@@ -473,9 +442,12 @@ public class Graphe {
         System.out.println("Tournées optimisées générées.");
         return resultat;
     }
+
+
     public List<Arc> getTousLesArcs() {
         return tousLesArcs;
     }
+
     public List<Arc> getArcsDuQuartier(int qid) {
         List<Arc> arcsQuartier = new ArrayList<>();
         for (Map.Entry<Arc,Integer> e : quartierArc.entrySet()) {
@@ -483,6 +455,5 @@ public class Graphe {
         }
         return arcsQuartier;
     }
-
 
 }

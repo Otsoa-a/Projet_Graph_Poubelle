@@ -271,8 +271,6 @@ public class Main {
                                     System.out.printf("  ➜ Distance totale entre ces arrêts : %.2f m%n", distanceTotale);
                                 }
                             }
-
-
                             case '3' -> {
                                 // La mairie organise la recolte en partant d'une adresse donnée
                                 System.out.print("Nom rue départ : ");
@@ -292,7 +290,6 @@ public class Main {
                                     }
                                 }
                             }
-
                             case '4' -> {
                                 // Ramassage des points de collecte : reprendre ton ancien case 6
                                 List<Pointcollecte> pointsCollecte = new ArrayList<>();
@@ -342,10 +339,8 @@ public class Main {
                                     }
                                 }
                             }
-
                             case '5' -> {
-                                // Organisation en fonction des jours : utilise case 7 que tu avais.
-                                // Lecture des centres depuis FICHIER_CENTRES si disponible
+                                // --- Chargement des centres depuis le fichier ---
                                 List<String> centres = new ArrayList<>();
                                 try {
                                     if (Files.exists(Paths.get(FICHIER_CENTRES))) {
@@ -356,70 +351,49 @@ public class Main {
                                         }
                                         System.out.println("Centres chargés depuis " + FICHIER_CENTRES + " (" + centres.size() + " ids).");
                                     } else {
-                                        System.out.println("Aucun fichier " + FICHIER_CENTRES + " trouvé : utilisation des centres par défaut dans Graphe.");
+                                        System.out.println("⚠ Aucun fichier " + FICHIER_CENTRES + " trouvé. Impossible de partitionner.");
                                     }
                                 } catch (IOException ioe) {
                                     System.out.println("Erreur lecture centres : " + ioe.getMessage());
                                 }
 
-                                // Partitionner : si Graphe possède une méthode acceptant une liste de centres, on l'utilise (reflection),
-                                // sinon on appelle partitionnerQuartiers() qui utilise ses centres internes.
-                                boolean partitionnee = false;
-                                try {
-                                    Method m = g.getClass().getMethod("partitionnerParIntersections", List.class);
-                                    m.invoke(g, centres);
-                                    partitionnee = true;
-                                } catch (NoSuchMethodException ns) {
-                                    // méthode non présente : essayer d'affecter un champ 'centresQuartiers' si présent (peut être final)
-                                    try {
-                                        Field f = g.getClass().getDeclaredField("centresQuartiers");
-                                        f.setAccessible(true);
-                                        // attention : si champ final présent, set() peut lancer une exception
-                                        f.set(g, centres);
-                                        // appeler partitionnerQuartiers ensuite
-                                        Method m2 = g.getClass().getMethod("partitionnerQuartiers");
-                                        m2.invoke(g);
-                                        partitionnee = true;
-                                    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException ex) {
-                                        // fallback
-                                    }
-                                } catch (Exception ex) {
-                                    System.out.println("Erreur invocation partition par intersections : " + ex.getMessage());
+                                // --- Partition du graphe ---
+                                if (centres.isEmpty()) {
+                                    System.out.println("⚠ Aucun centre chargé : partition impossible.");
+                                    break;
                                 }
 
-                                if (!partitionnee) {
-                                    // fallback simple
-                                    g.partitionnerQuartiers();
-                                }
+                                g.partitionnerParIntersections(centres);
 
                                 int nbQuartiers = new HashSet<>(g.quartierArc.values()).size();
                                 System.out.println("Partition en quartiers effectuée. Nombre de quartiers : " + nbQuartiers);
 
-                                // Colorier
+                                // --- Coloration Welsh–Powell ---
                                 Map<Integer, Integer> couleurQuartier = g.colorierQuartiers();
+
                                 System.out.println("\n=== Coloration des quartiers ===");
                                 for (Map.Entry<Integer, Integer> e : couleurQuartier.entrySet()) {
                                     System.out.println("Quartier " + e.getKey() + " -> couleur " + e.getValue());
                                 }
 
-                                // Afficher les rues par quartier
+                                // --- Affichage des rues par quartier ---
                                 System.out.println("\n=== Rues par quartier ===");
                                 for (int qid : new HashSet<>(g.quartierArc.values())) {
                                     System.out.println("Quartier " + qid + " : ");
                                     for (Arc a : g.getArcsDuQuartier(qid)) {
-                                        System.out.println("  - " + a.toString());
+                                        System.out.println("  - " + a.nom + " : " + a.nbBatiments + " maisons");
                                     }
                                     System.out.println();
                                 }
 
-                                // Réinitialiser les arcs si besoin
+                                // --- Réinitialisation ---
                                 for (Arc a : g.getTousLesArcs()) a.utilise = false;
 
-                                // Demander capacité camion
+                                // --- Capacité camion ---
                                 System.out.print("Capacité camion pour simulation des tournées : ");
                                 int cap = Integer.parseInt(sc.nextLine());
 
-                                // Préparer arcs par quartier
+                                // --- Préparation des arcs par quartier ---
                                 Map<Integer, List<Arc>> arcsParQuartier = new HashMap<>();
                                 for (int qid : new HashSet<>(g.quartierArc.values())) {
                                     List<Arc> arcsQuartier = g.getArcsDuQuartier(qid);
@@ -428,20 +402,20 @@ public class Main {
                                     arcsParQuartier.put(qid, copies);
                                 }
 
-                                // Couleurs ordonnées
-                                Set<Integer> couleursSet = new HashSet<>(couleurQuartier.values());
-                                List<Integer> couleursOrdonnees = new ArrayList<>(couleursSet);
+                                // --- Liste des couleurs triée ---
+                                List<Integer> couleursOrdonnees = new ArrayList<>(new HashSet<>(couleurQuartier.values()));
                                 Collections.sort(couleursOrdonnees);
 
+                                // --- Simulation jour après jour ---
                                 int jour = 1;
                                 boolean resteARamasser = true;
+
                                 while (resteARamasser) {
                                     resteARamasser = false;
 
                                     int couleurDuJour = couleursOrdonnees.get((jour - 1) % couleursOrdonnees.size());
                                     System.out.println("\n=== Jour " + jour + " — couleur " + couleurDuJour + " ===");
 
-                                    // Tous les quartiers de cette couleur
                                     for (int qid : arcsParQuartier.keySet()) {
                                         if (couleurQuartier.get(qid) != couleurDuJour) continue;
 
@@ -449,18 +423,21 @@ public class Main {
                                         if (arcsRestants.isEmpty()) continue;
 
                                         resteARamasser = true;
+
                                         int capaciteRestante = cap;
                                         List<Arc> tourDuJour = new ArrayList<>();
 
                                         Iterator<Arc> it = arcsRestants.iterator();
                                         while (it.hasNext() && capaciteRestante > 0) {
                                             Arc a = it.next();
+
                                             int prise = Math.min(capaciteRestante, a.nbBatiments);
                                             tourDuJour.add(a.copierAvecNbBatiments(prise));
                                             capaciteRestante -= prise;
 
-                                            if (prise == a.nbBatiments) it.remove();
-                                            else {
+                                            if (prise == a.nbBatiments) {
+                                                it.remove();
+                                            } else {
                                                 Arc reste = a.copierAvecNbBatiments(a.nbBatiments - prise);
                                                 it.remove();
                                                 arcsRestants.add(reste);
@@ -468,16 +445,13 @@ public class Main {
                                         }
 
                                         System.out.println("\nQuartier " + qid + " (couleur " + couleurDuJour +
-                                                ") -> Tournée (" + tourDuJour.size() + " arc) :");
-
+                                                ") -> Tournée (" + tourDuJour.size() + " arcs) :");
                                         for (Arc a : tourDuJour) {
                                             System.out.println("  - " + a.nom + " (" + a.nbBatiments + " maisons)");
                                         }
                                     }
-
                                     jour++;
                                 }
-
                                 System.out.println("\nSimulation terminée (organisation par jours).");
                             }
 
