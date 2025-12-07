@@ -1,6 +1,5 @@
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Graphe {
 
@@ -16,7 +15,7 @@ public class Graphe {
         return intersections.computeIfAbsent(id, Intersection::new); //on ajoute ou on crée une intersection
     }
 
-    //méthode pour ajouter un arc à partir de deux intersections, de sa longueur, de son nom, du nb de batiments, et si elle est sens unique)
+    //Ajouter un arc à partir de deux intersections (longueur, nom, nb de batiments, sens)
     public void ajouterArc(String idDep, String idArr, String nomRue, double longueur, int nbBat, boolean sensUnique) {
         Intersection d = getOrCreate(idDep);
         Intersection a = getOrCreate(idArr);
@@ -47,7 +46,7 @@ public class Graphe {
         if (liste == null) return null;
         Arc cible = null;
 
-        // Trouver l'arc contenant ce numéro
+        // Trouver arc contenant ce numéro
         for (Arc a : liste) {
             if (numero >= a.numeroDebut && numero <= a.numeroFin) {
                 cible = a;
@@ -57,13 +56,12 @@ public class Graphe {
 
         if (cible == null) return null;
 
-        // Ratio de position
         int index = numero - cible.numeroDebut + 1;
         double ratio = index / (double)cible.nbBatiments;
         return (ratio < 0.5) ? cible.depart : cible.arrivee;
     }
 
-    //on récup le graphe depuis le fichier texte et on crée un arc pour chaque section et un sommet pour chaque intersection
+    //on récup le graphe depuis fichier texte et on crée un arc pour chaque section et un sommet pour chaque intersection
     public void chargerDepuisFichier(String chemin) throws Exception {
         try (BufferedReader br = new BufferedReader(new FileReader(chemin))) {
             String ligne;
@@ -108,7 +106,7 @@ public class Graphe {
         return Dijkstra(iDep.id, iArr.id);
     }
 
-    //méthode dijkstra qui calcule le plus court chemin entre deux intersections
+    //méthode dijkstra (plus court chemin entre deux intersections)
     public List<Intersection> Dijkstra (String depart, String arrivee) {
         Map<Intersection, Double> dist = new HashMap<>();
         Map<Intersection, Intersection> pred = new HashMap<>();
@@ -147,7 +145,7 @@ public class Graphe {
         return chemin;
     }
 
-    //Méthode simple pour les tournées des poubelles (récup les poubelles de chaque maison)
+    //Méthode pour les tournées des poubelles (récup les poubelles de chaque maison)
     //Ici on ne prend pas en compte le retour. On considère que le camion passe par les maisons,
     // quand il est rempli on commence une nouvelle tournée en passant à l'intersection la plus proche
     public List<List<Arc>> tournéesEuleriennes(Intersection depart, int maxBatiments) { // on renvoie une liste de tournée
@@ -197,8 +195,6 @@ public class Graphe {
         return tournéesEuleriennes(depart, maxBatiments);
     }
 
-
-    // Ajoute ceci dans ta classe Graphe
     public List<List<Pointcollecte>> decouperTournees(
             List<String> ordreVisite,
             Map<String, Pointcollecte> contenanceMap,
@@ -218,7 +214,7 @@ public class Graphe {
                 int espace = capaciteCamion - charge;
 
                 if (espace == 0) {
-                    // Camion plein, on ferme la tournée
+                    // Camion pleinfin de la tournée
                     if (!currentTournee.isEmpty()) {
                         tournees.add(currentTournee);
                     }
@@ -229,13 +225,12 @@ public class Graphe {
 
                 int prise = Math.min(espace, origine.contenance);
 
-                // Créer un point fractionné
                 Pointcollecte prisePt = origine.fractionner(prise);
 
                 currentTournee.add(prisePt);
                 charge += prise;
 
-                // Décrémenter la contenance réelle
+                // On soustrait à la contenance
                 origine.contenance -= prise;
 
                 // Si camion plein après cette prise, fermer la tournée
@@ -253,11 +248,6 @@ public class Graphe {
 
         return tournees;
     }
-
-
-
-
-
 
     public double distanceEntre(Intersection depart, Intersection arrivee) {
         if (depart == null || arrivee == null) return Double.POSITIVE_INFINITY;
@@ -285,7 +275,7 @@ public class Graphe {
         return dist.getOrDefault(arrivee, Double.POSITIVE_INFINITY);
     }
 
-    // --- Partition du graphe en quartiers via une liste de centres fournie ---
+    //  PDivision du graphe en quartiers avec liste centres
     public void partitionnerParIntersections(List<String> centres) {
 
         Queue<Intersection> file = new ArrayDeque<>();
@@ -333,7 +323,7 @@ public class Graphe {
         }
         System.out.println("Partition terminée : " + q + " quartiers définis.");
     }
-    // --- Coloration des quartiers ---
+    // Coloration des quartiers
     public Map<Integer, Integer> colorierQuartiers() {
 
         Map<Integer, Set<Integer>> adj = new HashMap<>();
@@ -349,20 +339,16 @@ public class Graphe {
 
         Map<Integer, Integer> couleur = new HashMap<>();
 
-        // Welsh–Powell : trier par degré
+        // Welsh–Powell
         List<Integer> quartiers = new ArrayList<>(adj.keySet());
         quartiers.sort((a, b) -> Integer.compare(adj.get(b).size(), adj.get(a).size()));
 
         int currentColor = 0;
-
         for (int q : quartiers) {
             if (couleur.containsKey(q)) continue;
-
             couleur.put(q, currentColor);
-
             for (int other : quartiers) {
                 if (couleur.containsKey(other)) continue;
-
                 boolean ok = true;
                 for (int v : adj.get(other)) {
                     if (couleur.getOrDefault(v, -1) == currentColor) {
@@ -372,14 +358,12 @@ public class Graphe {
                 }
                 if (ok) couleur.put(other, currentColor);
             }
-
             currentColor++;
         }
-
         System.out.println("Coloration terminée.");
         return couleur;
     }
-    // --- Génération des tournées optimisées quartier par quartier ---
+    //Génération des tournées optimisées quartier par quartier
     public Map<Integer, List<List<Arc>>> genererTourneesOptimisees(int capaciteCamion) {
 
         Map<Integer, List<List<Arc>>> resultat = new HashMap<>();
@@ -395,7 +379,7 @@ public class Graphe {
             Set<Arc> nonCollectes = new HashSet<>(arcsQ);
             List<List<Arc>> tournees = new ArrayList<>();
 
-            // centre du quartier = intersection dont quartierDe == q
+            // centre du quartier
             Intersection centre = null;
             for (Intersection inter : quartierDe.keySet()) {
                 if (quartierDe.get(inter) == q) {

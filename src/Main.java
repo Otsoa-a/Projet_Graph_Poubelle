@@ -1,13 +1,10 @@
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.io.*;
 
 public class Main {
-    // fichiers utilisés
     private static final String FICHIER_PARTICULIERS = "demandes_particuliers.txt";
     private static final String FICHIER_CENTRES = "centres_quartiers.txt";
 
@@ -19,7 +16,7 @@ public class Main {
 
         System.out.println("Graphe chargé : " + g.intersections.size() + " intersections.");
 
-        // Boucle principale : on demande le rôle
+        // Demande rôle
         mainLoop:
         while (true) {
             System.out.println("\n--- Vous êtes : ---");
@@ -38,7 +35,7 @@ public class Main {
                 }
 
                 case 'P' -> {
-                    // Menu particulier : une seule action possible (demande de ramassage)
+                    // Menu particulier
                     System.out.println("\n--- Menu Particulier ---");
                     System.out.print("Souhaitez-vous demander un ramassage chez vous ? (O/N) : ");
                     String rep = sc.nextLine().trim().toUpperCase();
@@ -58,7 +55,7 @@ public class Main {
                         continue mainLoop;
                     }
 
-                    // On enregistre l'adresse dans le fichier (format : rue|numero)
+                    // Enregistrement adresse
                     String ligne = rue + "|" + numero;
                     try {
                         Files.write(Paths.get(FICHIER_PARTICULIERS),
@@ -69,13 +66,11 @@ public class Main {
                     } catch (IOException ioe) {
                         System.out.println("Erreur lors de l'enregistrement : " + ioe.getMessage());
                     }
-
-                    // Après enregistrement on retourne au choix de rôle
                     continue mainLoop;
                 }
 
                 case 'M' -> {
-                    // Menu mairie (boucle interne)
+                    // Menu mairie
                     mairieLoop:
                     while (true) {
                         System.out.println("\n===== MENU MAIRIE =====");
@@ -102,39 +97,38 @@ public class Main {
                             }
 
                             case 'R' -> {
-                                // Retour au choix de rôle
+                                // Retour choix de rôle
                                 break mairieLoop;
                             }
 
                             case '0' -> {
-                                // Afficher intersections (comme ancien case 1)
+                                // Afficher intersections
                                 System.out.println("\n--- Intersections ---");
                                 for (Intersection i : g.intersections.values())
                                     System.out.println(i.id + " : " + i.sortants.size() + " arcs sortants");
                             }
 
                             case '1' -> {
-                                // Calculer l'itinéraire depuis une adresse choisie par la mairie
-                                // jusqu'à la première adresse dans le fichier particuliers
+                                // Calculer l'itinéraire jusqu'à la première adresse demandes.txt
                                 System.out.print("Nom rue départ : ");
                                 String rueDep = sc.nextLine();
                                 System.out.print("Numéro départ : ");
                                 int numDep = Integer.parseInt(sc.nextLine());
 
-                                // Lire la première adresse du fichier
+                                // Lecture adresse
                                 List<String> demandes = lireDemandesParticuliers();
                                 if (demandes.isEmpty()) {
                                     System.out.println("Aucune demande particulière dans " + FICHIER_PARTICULIERS);
                                     break;
                                 }
-                                String premiere = demandes.get(0); // format rue|num
+                                String premiere = demandes.get(0);
                                 String[] parts = premiere.split("\\|");
                                 String rueArr = parts[0];
                                 int numArr = Integer.parseInt(parts[1]);
 
                                 var chemin = g.DijkstraAdresse(rueDep, numDep, rueArr, numArr);
                                 if (chemin == null || chemin.isEmpty()) {
-                                    System.out.println("⚠ Aucun chemin trouvé !");
+                                    System.out.println("Aucun chemin trouvé !");
                                 } else {
                                     System.out.println("\nChemin obtenu :");
                                     for (var inter : chemin) System.out.println(" -> " + inter.id);
@@ -145,14 +139,13 @@ public class Main {
                                         Intersection b = chemin.get(i + 1);
                                         Arc arc = a.sortants.stream().filter(x -> x.arrivee == b).findFirst().orElse(null);
                                         System.out.println((arc != null) ? "De " + a.id + " à " + b.id + " par " + arc.nom
-                                                : "⚠ Aucun arc entre " + a.id + " et " + b.id);
+                                                : "Aucun arc entre " + a.id + " et " + b.id);
                                     }
                                 }
                             }
 
                             case '2' -> {
-                                // Faire le tour de toutes les adresses données par les particuliers
-                                // Optimisation via MST comme dans ton ancien case 6 (on convertit demandes → Pointcollecte)
+                                // Tour de toutes les adresses données par les particuliers
                                 List<String> demandes = lireDemandesParticuliers();
                                 if (demandes.isEmpty()) {
                                     System.out.println("Aucune adresse de particuliers trouvée.");
@@ -160,11 +153,10 @@ public class Main {
                                 }
 
                                 List<Pointcollecte> pointsCollecte = new ArrayList<>();
-                                // on prend contenance = 1 pour chaque particulier (unités)
                                 for (String d : demandes) {
                                     String[] p = d.split("\\|");
                                     if (p.length < 2) {
-                                        System.out.println("⚠ Format d'adresse invalide (ignorée): " + d);
+                                        System.out.println(" Format d'adresse invalide (ignorée): " + d);
                                         continue;
                                     }
                                     String rue = p[0];
@@ -172,14 +164,14 @@ public class Main {
                                     try {
                                         num = Integer.parseInt(p[1]);
                                     } catch (NumberFormatException nfe) {
-                                        System.out.println("⚠ Numéro invalide (ignorée): " + d);
+                                        System.out.println(" Numéro invalide (ignorée): " + d);
                                         continue;
                                     }
                                     Intersection inter = g.trouverIntersection(rue, num);
                                     if (inter != null) {
                                         pointsCollecte.add(new Pointcollecte(inter, 1, rue, num));
                                     } else {
-                                        System.out.println("⚠ Adresse introuvable (ignorée): " + rue + " " + num);
+                                        System.out.println(" Adresse introuvable (ignorée): " + rue + " " + num);
                                     }
                                 }
 
@@ -205,7 +197,7 @@ public class Main {
                                 Map<String, Pointcollecte> contenanceMap = new HashMap<>();
                                 for (Pointcollecte p : pointsCollecte) contenanceMap.put(p.id, p);
 
-                                // Ici on n'utilise pas la capacité : on affiche l'ordre optimisé
+                                // Ordre optimisé
                                 System.out.println("\nOrdre optimisé des adresses (MST préfixe) :");
                                 int idx = 1;
                                 for (String id : ordreVisite) {
@@ -216,7 +208,7 @@ public class Main {
                                         System.out.println(idx++ + " - " + id + " (Point inconnu)");
                                 }
 
-                                // --- Affichage détaillé des chemins entre chaque adresse consécutive ---
+                                // Affichage des chemins entre chaque adresse
                                 System.out.println("\n=== Chemins détaillés entre les arrêts ===");
 
                                 for (int i = 0; i < ordreVisite.size() - 1; i++) {
@@ -234,10 +226,10 @@ public class Main {
                                     System.out.println("\nDe " + A.id + " (" + contenanceMap.get(idA).rue + " " + contenanceMap.get(idA).numero + ")"
                                             + " → " + B.id + " (" + contenanceMap.get(idB).rue + " " + contenanceMap.get(idB).numero + ") :");
 
-                                    // on utilise Dijkstra existant (chemin en intersections)
+                                    // On utilise Djikstra
                                     List<Intersection> chemin = g.Dijkstra(A.id, B.id);
                                     if (chemin == null || chemin.isEmpty()) {
-                                        System.out.println("  ⚠ Aucun chemin trouvé !");
+                                        System.out.println(" Aucun chemin trouvé !");
                                         continue;
                                     }
 
@@ -247,14 +239,14 @@ public class Main {
                                         System.out.println("    - " + inter.id);
                                     }
 
-                                    // Affichage des rues empruntées et accumulation de la distance
+                                    // Affichage des rues empruntées distance
                                     System.out.println("  Rues empruntées :");
                                     double distanceTotale = 0.0;
                                     for (int j = 0; j < chemin.size() - 1; j++) {
                                         Intersection X = chemin.get(j);
                                         Intersection Y = chemin.get(j + 1);
 
-                                        // Chercher un arc X -> Y (respect du sens). Si introuvable, on cherche Y -> X au cas où graphe non orienté/logique)
+                                        // Chercher un arc X -> Y sinon Y -> X
                                         Arc arc = X.sortants.stream().filter(a -> a.arrivee == Y).findFirst().orElse(null);
                                         if (arc == null) {
                                             arc = Y.sortants.stream().filter(a -> a.arrivee == X).findFirst().orElse(null);
@@ -272,7 +264,7 @@ public class Main {
                                 }
                             }
                             case '3' -> {
-                                // La mairie organise la recolte en partant d'une adresse donnée
+                                // Récolte en partant d'une adresse donnée
                                 System.out.print("Nom rue départ : ");
                                 String rue = sc.nextLine();
                                 System.out.print("Numéro départ : ");
@@ -281,7 +273,7 @@ public class Main {
                                 int capacite = Integer.parseInt(sc.nextLine());
 
                                 var tours = g.tourneesDepuisAdresse(rue, numero, capacite);
-                                if (tours == null || tours.isEmpty()) System.out.println("⚠ Aucun tour trouvé !");
+                                if (tours == null || tours.isEmpty()) System.out.println("Aucun tour trouvé !");
                                 else {
                                     int numTour = 1;
                                     for (List<Arc> tour : tours) {
@@ -291,9 +283,9 @@ public class Main {
                                 }
                             }
                             case '4' -> {
-                                // Ramassage des points de collecte : reprendre ton ancien case 6
+                                // Ramassage des points de collecte
                                 List<Pointcollecte> pointsCollecte = new ArrayList<>();
-                                // DEPOT (exemple) - garder ce que tu avais
+                                // Choisi arbitrairement :
                                 pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RuedesEntrepreneurs", 18), 0, "RuedesEntrepreneurs", 18));
                                 pointsCollecte.add(new Pointcollecte(g.trouverIntersection("BoulevardduMontparnasse", 123), 105, "BoulevardduMontparnasse", 123));
                                 pointsCollecte.add(new Pointcollecte(g.trouverIntersection("RueSaint-Honoré", 50), 705, "RueSaint-Honoré", 50));
@@ -340,7 +332,7 @@ public class Main {
                                 }
                             }
                             case '5' -> {
-                                // --- Chargement des centres depuis le fichier ---
+                                // Chargement  centres depuis le fichier
                                 List<String> centres = new ArrayList<>();
                                 try {
                                     if (Files.exists(Paths.get(FICHIER_CENTRES))) {
@@ -351,15 +343,14 @@ public class Main {
                                         }
                                         System.out.println("Centres chargés depuis " + FICHIER_CENTRES + " (" + centres.size() + " ids).");
                                     } else {
-                                        System.out.println("⚠ Aucun fichier " + FICHIER_CENTRES + " trouvé. Impossible de partitionner.");
+                                        System.out.println("Aucun fichier " + FICHIER_CENTRES + " trouvé. Impossible de partitionner.");
                                     }
                                 } catch (IOException ioe) {
                                     System.out.println("Erreur lecture centres : " + ioe.getMessage());
                                 }
 
-                                // --- Partition du graphe ---
                                 if (centres.isEmpty()) {
-                                    System.out.println("⚠ Aucun centre chargé : partition impossible.");
+                                    System.out.println("Aucun centre chargé : partition impossible.");
                                     break;
                                 }
 
@@ -368,7 +359,7 @@ public class Main {
                                 int nbQuartiers = new HashSet<>(g.quartierArc.values()).size();
                                 System.out.println("Partition en quartiers effectuée. Nombre de quartiers : " + nbQuartiers);
 
-                                // --- Coloration Welsh–Powell ---
+                                //  Coloration Welsh–Powell
                                 Map<Integer, Integer> couleurQuartier = g.colorierQuartiers();
 
                                 System.out.println("\n=== Coloration des quartiers ===");
@@ -376,7 +367,7 @@ public class Main {
                                     System.out.println("Quartier " + e.getKey() + " -> couleur " + e.getValue());
                                 }
 
-                                // --- Affichage des rues par quartier ---
+                                // Affichage des rues par quartier
                                 System.out.println("\n=== Rues par quartier ===");
                                 for (int qid : new HashSet<>(g.quartierArc.values())) {
                                     System.out.println("Quartier " + qid + " : ");
@@ -386,14 +377,13 @@ public class Main {
                                     System.out.println();
                                 }
 
-                                // --- Réinitialisation ---
                                 for (Arc a : g.getTousLesArcs()) a.utilise = false;
 
-                                // --- Capacité camion ---
+                                // Capacité
                                 System.out.print("Capacité camion pour simulation des tournées : ");
                                 int cap = Integer.parseInt(sc.nextLine());
 
-                                // --- Préparation des arcs par quartier ---
+                                // Préparation des arcs par quartier
                                 Map<Integer, List<Arc>> arcsParQuartier = new HashMap<>();
                                 for (int qid : new HashSet<>(g.quartierArc.values())) {
                                     List<Arc> arcsQuartier = g.getArcsDuQuartier(qid);
@@ -402,11 +392,11 @@ public class Main {
                                     arcsParQuartier.put(qid, copies);
                                 }
 
-                                // --- Liste des couleurs triée ---
+                                // Liste des couleurs
                                 List<Integer> couleursOrdonnees = new ArrayList<>(new HashSet<>(couleurQuartier.values()));
                                 Collections.sort(couleursOrdonnees);
 
-                                // --- Simulation jour après jour ---
+                                // Simulation jour après jour
                                 int jour = 1;
                                 boolean resteARamasser = true;
 
@@ -430,11 +420,9 @@ public class Main {
                                         Iterator<Arc> it = arcsRestants.iterator();
                                         while (it.hasNext() && capaciteRestante > 0) {
                                             Arc a = it.next();
-
                                             int prise = Math.min(capaciteRestante, a.nbBatiments);
                                             tourDuJour.add(a.copierAvecNbBatiments(prise));
                                             capaciteRestante -= prise;
-
                                             if (prise == a.nbBatiments) {
                                                 it.remove();
                                             } else {
@@ -456,7 +444,7 @@ public class Main {
                             }
 
                             case '6' -> {
-                                // Recherche d'une intersection proche (comme ancien case 4)
+                                // Recherche d'une intersection proche
                                 System.out.print("Nom rue : ");
                                 String rue = sc.nextLine();
                                 System.out.print("Numéro : ");
@@ -466,7 +454,7 @@ public class Main {
                                 if (proche != null)
                                     System.out.println("Intersection la plus proche : " + proche.id);
                                 else
-                                    System.out.println("⚠ Rue ou numéro non trouvé !");
+                                    System.out.println("Rue ou numéro non trouvé !");
                             }
                             case '7' -> {
                                 StringBuilder dot = new StringBuilder("digraph G {\n");
@@ -479,7 +467,6 @@ public class Main {
 
                                 for (Intersection i : g.intersections.values()) {
 
-                                    // (C) Forme différente pour les intersections "majeures"
                                     if (i.sortants.size() >= 4) {
                                         dot.append("  \"").append(i.id).append("\"")
                                                 .append(" [shape=doublecircle, fillcolor=lightgreen];\n");
@@ -492,13 +479,13 @@ public class Main {
 
                                         if (!arcsAjoutes.contains(key)) {
 
-                                            // (A) Couleur en fonction du nombre de bâtiments
+                                            // Couleur en fonction du nombre de bâtiments
                                             String color;
                                             if (a.nbBatiments > 10) color = "red";
                                             else if (a.nbBatiments > 5) color = "orange";
                                             else color = "green";
 
-                                            // (B) Épaisseur de trait proportionnelle
+                                            // Épaisseur de trait proportionnelle
                                             int width = Math.min(5, 1 + a.nbBatiments / 3);
 
                                             dot.append("  \"").append(i.id).append("\" -> \"")
@@ -518,19 +505,19 @@ public class Main {
                                 Files.write(Paths.get("graphe.dot"), dot.toString().getBytes());
                                 System.out.println("Fichier graphe.dot généré !");
                             }
-                            default -> System.out.println("⚠ Choix invalide !");
-                        } // end switch mairie
-                    } // end while mairie
-                } // end case M
+                            default -> System.out.println("Choix invalide !");
+                        }
+                    }
+                }
 
                 default -> {
                     System.out.println("Choix invalide, recommencez.");
                 }
-            } // end switch role
-        } // end main loop
-    } // end main
+            }
+        }
+    }
 
-    // --------- Utilitaires pour lire le fichier des particuliers ----------
+    //  Pour lire le fichier des particuliers
     private static List<String> lireDemandesParticuliers() {
         try {
             if (!Files.exists(Paths.get(FICHIER_PARTICULIERS))) return Collections.emptyList();
@@ -539,19 +526,17 @@ public class Main {
             for (String L : lines) {
                 String s = L.trim();
                 if (s.isEmpty()) continue;
-                // si ligne contient des espaces on remplace par '|' si l'utilisateur a saisi autrement
+                // si ligne contient des espaces on remplace par '|'
                 if (s.contains("|")) out.add(s);
                 else {
-                    // Supporte format "RueName 12" ou "RueName|12", on assume dernière token est le numero
                     String[] toks = s.split("\\s+");
                     String num = toks[toks.length - 1];
                     String rue = String.join("", Arrays.copyOf(toks, toks.length - 1));
-                    // fallback si parsing raté : garder la ligne brute
                     try {
                         Integer.parseInt(num);
                         out.add(rue + "|" + num);
                     } catch (Exception ex) {
-                        out.add(s); // on laisse tel quel (mais risque d'erreur plus tard)
+                        out.add(s);
                     }
                 }
             }
