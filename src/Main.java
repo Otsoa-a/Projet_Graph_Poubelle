@@ -15,7 +15,7 @@ public class Main {
 
         Scanner sc = new Scanner(System.in);
         Graphe g = new Graphe();
-        g.chargerDepuisFichier("vincennes_sections_realnum.txt");
+        g.chargerDepuisFichier("Paname.txt");
 
         System.out.println("Graphe chargé : " + g.intersections.size() + " intersections.");
 
