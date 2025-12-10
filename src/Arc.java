@@ -1,3 +1,5 @@
+//classe pour les arcs
+//un arc représente une section de rue
 public class Arc {
     public final String nom;
     public final int nbBatiments;

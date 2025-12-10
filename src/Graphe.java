@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Graphe {
 
-    // Résultats
+    //les structures du graphe
     public Map<Intersection, Integer> quartierDe = new HashMap<>();
     public Map<Arc, Integer> quartierArc = new HashMap<>();
 
@@ -15,7 +15,7 @@ public class Graphe {
         return intersections.computeIfAbsent(id, Intersection::new); //on ajoute ou on crée une intersection
     }
 
-    //Ajouter un arc à partir de deux intersections (longueur, nom, nb de batiments, sens)
+    //ajouter un arc à partir de deux intersections (longueur, nom, nb de batiments, sens)
     public void ajouterArc(String idDep, String idArr, String nomRue, double longueur, int nbBat, boolean sensUnique) {
         Intersection d = getOrCreate(idDep);
         Intersection a = getOrCreate(idArr);
@@ -28,7 +28,7 @@ public class Graphe {
         tousLesArcs.add(arc);
         arcsParRue.computeIfAbsent(nomRue, k -> new ArrayList<>()).add(arc);
     }
-
+    //pour assigner un numéro sur les sections
     private void assignerNumeros() {
         for (List<Arc> liste : arcsParRue.values()) {
             int courant = 1;
@@ -39,14 +39,14 @@ public class Graphe {
             }
         }
     }
-
+    //méthode pour trouver l'intersectino la plus proche
     public Intersection trouverIntersection(String nomRue, int numero) {
 
         List<Arc> liste = arcsParRue.get(nomRue);
         if (liste == null) return null;
         Arc cible = null;
 
-        // Trouver arc contenant ce numéro
+        //on cherche l'arc avec le numéro
         for (Arc a : liste) {
             if (numero >= a.numeroDebut && numero <= a.numeroFin) {
                 cible = a;
@@ -58,7 +58,7 @@ public class Graphe {
 
         int index = numero - cible.numeroDebut + 1;
         double ratio = index / (double)cible.nbBatiments;
-        return (ratio < 0.5) ? cible.depart : cible.arrivee;
+        return (ratio < 0.5) ? cible.depart : cible.arrivee; //on prend l'intersection la plus proche en fonction du nombre de bat de chaque coté de l'arc.
     }
 
     //on récup le graphe depuis fichier texte et on crée un arc pour chaque section et un sommet pour chaque intersection
@@ -90,23 +90,19 @@ public class Graphe {
             assignerNumeros();
         }
     }
-
-    public List<Intersection> DijkstraAdresse(
-            String rueDepart, int numDepart,
-            String rueArrivee, int numArrivee
-    ) {
+//on fait une méthode pour le dijkstra à partir d'une adresse.
+    public List<Intersection> DijkstraAdresse(String rueDepart, int numDepart, String rueArrivee, int numArrivee) {
         Intersection iDep = trouverIntersection(rueDepart, numDepart);
         Intersection iArr = trouverIntersection(rueArrivee, numArrivee);
 
         if (iDep == null || iArr == null) {
-            System.out.println("Adresse introuvable !");
+            System.out.println("pas trouvé d'adresse");
             return null;
         }
-
         return Dijkstra(iDep.id, iArr.id);
     }
 
-    //méthode dijkstra (plus court chemin entre deux intersections)
+    //méthode dijkstra
     public List<Intersection> Dijkstra (String depart, String arrivee) {
         Map<Intersection, Double> dist = new HashMap<>();
         Map<Intersection, Intersection> pred = new HashMap<>();
@@ -115,6 +111,7 @@ public class Graphe {
         Intersection start = this.intersections.get(depart);
         Intersection end = this.intersections.get(arrivee);
 
+        //toutes les autres intersections à l'infini
         for (Intersection i : this.intersections.values()){
             dist.put(i, Double.POSITIVE_INFINITY);
         }
@@ -122,7 +119,7 @@ public class Graphe {
         pq.add(start);
         while (!pq.isEmpty()) {
             Intersection u = pq.poll();
-
+            //si on trouve l'intersection.
             if (u == end) break;
 
             for (Arc arc : u.sortants) {
@@ -136,6 +133,7 @@ public class Graphe {
                 }
             }
         }
+        //on inverse les chemins
         LinkedList<Intersection> chemin = new LinkedList<>();
         Intersection curr = end;
         while (curr != null) {
@@ -183,22 +181,19 @@ public class Graphe {
         }
         return tournees;
     }
-
+//idem que dijkstra avec adresse
     public List<List<Arc>> tourneesDepuisAdresse(String rue, int numero, int maxBatiments) {
 
         Intersection depart = trouverIntersection(rue, numero);
         if (depart == null) {
-            System.out.println("Adresse introuvable !");
+            System.out.println("pas d'adresse");
             return null;
         }
 
         return tournéesEuleriennes(depart, maxBatiments);
     }
-
-    public List<List<Pointcollecte>> decouperTournees(
-            List<String> ordreVisite,
-            Map<String, Pointcollecte> contenanceMap,
-            int capaciteCamion) {
+//pour découper les tournées en fonction des autres.
+    public List<List<Pointcollecte>> decouperTournees(List<String> ordreVisite, Map<String, Pointcollecte> contenanceMap, int capaciteCamion) {
 
         List<List<Pointcollecte>> tournees = new ArrayList<>();
         List<Pointcollecte> currentTournee = new ArrayList<>();
@@ -214,7 +209,7 @@ public class Graphe {
                 int espace = capaciteCamion - charge;
 
                 if (espace == 0) {
-                    // Camion pleinfin de la tournée
+                    //il est plein à la fin de la tournée
                     if (!currentTournee.isEmpty()) {
                         tournees.add(currentTournee);
                     }
@@ -230,10 +225,10 @@ public class Graphe {
                 currentTournee.add(prisePt);
                 charge += prise;
 
-                // On soustrait à la contenance
+                //on enlève à la contenance
                 origine.contenance -= prise;
 
-                // Si camion plein après cette prise, fermer la tournée
+                //si camion plein après cette prise, fermer la tournée
                 if (charge >= capaciteCamion) {
                     tournees.add(currentTournee);
                     currentTournee = new ArrayList<>();
@@ -248,7 +243,7 @@ public class Graphe {
 
         return tournees;
     }
-
+    //calcule de la distance entre deux intersections
     public double distanceEntre(Intersection depart, Intersection arrivee) {
         if (depart == null || arrivee == null) return Double.POSITIVE_INFINITY;
 
@@ -275,7 +270,7 @@ public class Graphe {
         return dist.getOrDefault(arrivee, Double.POSITIVE_INFINITY);
     }
 
-    //  PDivision du graphe en quartiers avec liste centres
+    //division du graphe en quartiers avec liste centres
     public void partitionnerParIntersections(List<String> centres) {
 
         Queue<Intersection> file = new ArrayDeque<>();
@@ -294,7 +289,7 @@ public class Graphe {
             }
         }
 
-        // BFS multi-source
+        //on fait plusieurs BFS à partir des centres
         while (!file.isEmpty()) {
             Intersection u = file.poll();
             int qU = quartierDe.get(u);
@@ -317,13 +312,13 @@ public class Graphe {
             }
         }
 
-        // Attribution des arcs
+        //on attribue des arcs
         for (Arc a : tousLesArcs) {
             quartierArc.put(a, quartierDe.get(a.depart));
         }
-        System.out.println("Partition terminée : " + q + " quartiers définis.");
+        System.out.println(q + " quartiers définis.");
     }
-    // Coloration des quartiers
+    //méthode pour colorer les quartiers
     public Map<Integer, Integer> colorierQuartiers() {
 
         Map<Integer, Set<Integer>> adj = new HashMap<>();
@@ -339,7 +334,7 @@ public class Graphe {
 
         Map<Integer, Integer> couleur = new HashMap<>();
 
-        // Welsh–Powell
+        //on utilise welshpowell
         List<Integer> quartiers = new ArrayList<>(adj.keySet());
         quartiers.sort((a, b) -> Integer.compare(adj.get(b).size(), adj.get(a).size()));
 
@@ -363,71 +358,7 @@ public class Graphe {
         System.out.println("Coloration terminée.");
         return couleur;
     }
-    //Génération des tournées optimisées quartier par quartier
-    public Map<Integer, List<List<Arc>>> genererTourneesOptimisees(int capaciteCamion) {
-
-        Map<Integer, List<List<Arc>>> resultat = new HashMap<>();
-        Map<Integer, List<Arc>> arcsParQuartier = new HashMap<>();
-
-        for (Arc a : tousLesArcs) {
-            int q = quartierArc.get(a);
-            arcsParQuartier.computeIfAbsent(q, k -> new ArrayList<>()).add(a);
-        }
-
-        for (int q : arcsParQuartier.keySet()) {
-            List<Arc> arcsQ = arcsParQuartier.get(q);
-            Set<Arc> nonCollectes = new HashSet<>(arcsQ);
-            List<List<Arc>> tournees = new ArrayList<>();
-
-            // centre du quartier
-            Intersection centre = null;
-            for (Intersection inter : quartierDe.keySet()) {
-                if (quartierDe.get(inter) == q) {
-                    centre = inter;
-                    break;
-                }
-            }
-            if (centre == null) continue;
-            while (!nonCollectes.isEmpty()) {
-
-                List<Arc> tournee = new ArrayList<>();
-                int charge = 0;
-                Intersection pos = centre;
-
-                while (true) {
-                    Arc meilleur = null;
-                    double meilleureDist = Double.POSITIVE_INFINITY;
-
-                    for (Arc a : nonCollectes) {
-                        double d = distanceEntre(pos, a.depart);
-                        if (d < meilleureDist) {
-                            meilleureDist = d;
-                            meilleur = a;
-                        }
-                    }
-
-                    if (meilleur == null) break;
-
-                    if (charge + meilleur.nbBatiments > capaciteCamion)
-                        break;
-
-                    tournee.add(meilleur);
-                    charge += meilleur.nbBatiments;
-                    nonCollectes.remove(meilleur);
-                    pos = meilleur.arrivee;
-                }
-
-                if (!tournee.isEmpty()) tournees.add(tournee);
-            }
-
-            resultat.put(q, tournees);
-        }
-
-        System.out.println("Tournées optimisées générées.");
-        return resultat;
-    }
-
-
+   
     public List<Arc> getTousLesArcs() {
         return tousLesArcs;
     }

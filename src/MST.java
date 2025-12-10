@@ -1,6 +1,8 @@
 import java.util.*;
+//classe pour MST
 
 class MST {
+    //on fait un prim pour avoir le graphe vidé
     public static List<String[]> prim(graphereduit gr, String depotId) {
         Set<String> visited = new HashSet<>();
         List<String[]> mstEdges = new ArrayList<>();
@@ -9,7 +11,7 @@ class MST {
         visited.add(depotId);
 
 
-        // Ajouter les arcs initiaux
+        //on ajoute
         for (Map.Entry<String, Double> e : gr.distances.get(depotId).entrySet()) {
             pq.add(new String[]{depotId, e.getKey(), String.valueOf(e.getValue())});
         }
